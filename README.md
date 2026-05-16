@@ -62,11 +62,29 @@ python3 barfbow.py --N 100 --H-orbits 2.5 --h1 90 --L1 30 --L2 85 --L-cycles 3.5
 - `--h1`: initial Hue angle in degrees.
 - `--L1` / `--L2`: OKLCh luminance endpoints, as percentages.
 - `--L-cycles`: number of luminance cycles from `L1` to `L2` and back.
-- `--c1`: initial OKLCh chroma percentage, clamped to `0..100`.
+- `--c1`: initial barfbow chroma percentage, clamped to `0..100`.
 - `--deltaC`: chroma change between blocks. Use a number such as `-30`, or use `none` to halve each new block.
 - `--C-mode`: chroma progression mode.
 - `--save-csv` / `--csv-path`: write the generated table.
 - `--save-png` / `--png-path`: save the PNG preview.
+
+## Chroma Scale
+
+barfbow chroma is a friendly `0..100` design scale. Internally, it maps to OKLCh chroma like this:
+
+```text
+OKLCh C = barfbow C% * 0.0032
+```
+
+So `--c1 100` requests OKLCh `C = 0.32`, which is 80% of an OKLCh `C = 0.4` reference scale. A few examples:
+
+```text
+barfbow C 100 -> OKLCh C 0.320 -> 80% of 0.4
+barfbow C 85  -> OKLCh C 0.272 -> 68% of 0.4
+barfbow C 50  -> OKLCh C 0.160 -> 40% of 0.4
+```
+
+Some OKLCh colors are outside what regular sRGB screens can display. When that happens, barfbow keeps the requested `L` and Hue, then reduces the rendered chroma just enough to fit inside sRGB. The terminal and CSV `C%` column still show the requested barfbow chroma value.
 
 ## C-mode
 
