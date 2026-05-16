@@ -2,6 +2,8 @@
 
 `barfbow` generates OKLCh color palettes and previews them as a PNG with color-vision simulations, monochrome rendering, named swatches, and OKLCh walk wheels.
 
+![barfbow palette preview](docs/barfbow_preview.png)
+
 ## Install
 
 Clone the repository, create a virtual environment, and install the dependencies:
@@ -104,18 +106,3 @@ python -m unittest discover -s tests
 ## License
 
 MIT. See `LICENSE`.
-
-## Publish On GitHub
-
-This folder is not currently initialized as a Git repository. A standard first publish looks like this:
-
-```bash
-git init
-git add barfbow.py README.md requirements.txt pyproject.toml color_names_meodai.csv tests .gitignore
-git commit -m "Initial barfbow release"
-git branch -M main
-git remote add origin https://github.com/evolvwing/barfbow.git
-git push -u origin main
-```
-
-Before publishing, choose a license and add a `LICENSE` file. MIT is common for small open-source tools, but the right license is your call.
