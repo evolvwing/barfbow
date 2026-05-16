@@ -1,5 +1,9 @@
 # barfbow
 
+<p align="center">
+  <img src="docs/barfbow_logo1.png" alt="barfbow unicorn logo" width="420">
+</p>
+
 `barfbow` generates OKLCh color palettes and previews them as a PNG with color-vision simulations, monochrome rendering, named swatches, and OKLCh walk wheels.
 
 ![barfbow palette preview](docs/barfbow_preview.png)
@@ -106,3 +110,7 @@ python -m unittest discover -s tests
 ## License
 
 MIT. See `LICENSE`.
+
+<p align="center">
+  <img src="docs/barfbow_logo2.png" alt="barfbow frog wizard logo" width="420">
+</p>
