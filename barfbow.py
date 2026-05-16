@@ -322,7 +322,7 @@ def draw_oklch_wheel(ax, plt, rows: List[Tuple[str, float, float, float]], chrom
             dot_colors = ["#FFFFFF"]
         else:
             dot_colors = [
-                "#{0:02X}{0:02X}{0:02X}".format(round(255 - 178.5 * index / (len(path_points) - 1)))
+                "#{0:02X}{0:02X}{0:02X}".format(round(255 - 153.0 * index / (len(path_points) - 1)))
                 for index in range(len(path_points))
             ]
         ax.scatter(x_values, y_values, s=12, facecolors="none", edgecolors=dot_colors,
