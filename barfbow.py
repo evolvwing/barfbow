@@ -291,7 +291,8 @@ def displayed_chroma_ranges(chroma_ranges: List[Tuple[str, float, int, int]]) ->
 def draw_oklch_wheel(ax, plt, rows: List[Tuple[str, float, float, float]], chroma_name: str,
                      chroma: float, start: int, end: int, center: Tuple[float, float],
                      radius: float, label_line_1: str | None = None,
-                     label_line_2: str | None = None) -> None:
+                     label_line_2: str | None = None,
+                     reverse_dot_fade: bool = False) -> None:
     from matplotlib.patches import Circle, Wedge
 
     radial_steps = 20
@@ -322,7 +323,9 @@ def draw_oklch_wheel(ax, plt, rows: List[Tuple[str, float, float, float]], chrom
             dot_colors = ["#FFFFFF"]
         else:
             dot_colors = [
-                "#{0:02X}{0:02X}{0:02X}".format(round(255 - 204.0 * index / (len(path_points) - 1)))
+                "#{0:02X}{0:02X}{0:02X}".format(round(51 + 204.0 * index / (len(path_points) - 1)))
+                if reverse_dot_fade
+                else "#{0:02X}{0:02X}{0:02X}".format(round(255 - 204.0 * index / (len(path_points) - 1)))
                 for index in range(len(path_points))
             ]
         ax.scatter(x_values, y_values, s=12, facecolors="none", edgecolors=dot_colors,
@@ -338,7 +341,7 @@ def draw_oklch_wheel(ax, plt, rows: List[Tuple[str, float, float, float]], chrom
 
 def draw_oklch_walk_maps(ax, plt, rows: List[Tuple[str, float, float, float]],
                          chroma_ranges: List[Tuple[str, float, int, int]],
-                         L_cycles: float) -> None:
+                         L_cycles: float, reverse_dot_fade: bool) -> None:
     ax.set_xlim(0, WHEEL_X_MAX); ax.set_ylim(-0.04, 1.08); ax.set_aspect("equal"); ax.axis("off")
     visible_ranges = displayed_chroma_ranges(chroma_ranges)
     hidden_count = max(0, len(chroma_ranges) - 4)
@@ -350,16 +353,18 @@ def draw_oklch_walk_maps(ax, plt, rows: List[Tuple[str, float, float, float]],
         center=positions[0], radius=radius,
         label_line_1=f"overview at {format_number(full_walk_chroma)}% chroma",
         label_line_2=f"{len(rows)} colors with {format_number(L_cycles)} luminance cycles",
+        reverse_dot_fade=reverse_dot_fade,
     )
     for visible_range, center in zip(visible_ranges, positions[1:]):
-        draw_oklch_wheel(ax, plt, rows, *visible_range, center=center, radius=radius)
+        draw_oklch_wheel(ax, plt, rows, *visible_range, center=center, radius=radius,
+                         reverse_dot_fade=reverse_dot_fade)
     if hidden_count:
         cx, cy = positions[4]
         ax.text(cx, cy - radius - 0.08, f"{hidden_count} chroma layers not shown...", ha="center", va="top",
                 fontsize=11, weight="bold", color="#333333")
 
 def show_swatch_grid(rows: List[Tuple[str, float, float, float]], chroma_ranges: List[Tuple[str, float, int, int]],
-                     title: str, L_cycles: float, save_png: bool = False,
+                     title: str, L_cycles: float, reverse_dot_fade: bool = False, save_png: bool = False,
                      png_path: str = "palette_grid.png", show: bool = True, block: bool = False) -> None:
     try:
         import matplotlib.pyplot as plt
@@ -392,7 +397,7 @@ def show_swatch_grid(rows: List[Tuple[str, float, float, float]], chroma_ranges:
     wheel_ax = fig.add_axes([0.02, 0.015, 0.96, 0.49])
     wheel_ax.set_facecolor(PNG_BACKGROUND)
     wheel_ax.set_zorder(2)
-    draw_oklch_walk_maps(wheel_ax, plt, rows, chroma_ranges, L_cycles)
+    draw_oklch_walk_maps(wheel_ax, plt, rows, chroma_ranges, L_cycles, reverse_dot_fade)
     title_lines = title.splitlines()
     title_y = [0.975, 0.948, 0.921]
     fig.text(0.18, title_y[0], "barfbow", ha="center", va="top", fontsize=28, weight="bold", fontfamily="Oswald")
@@ -611,6 +616,7 @@ def main():
 
     title = palette_title(N, H_orbits, h1, L1, L2, L_cycles, c1, args.deltaC, args.C_mode)
     show_swatch_grid(rows, chroma_ranges, title=title, L_cycles=L_cycles,
+                     reverse_dot_fade=L1 > L2,
                      save_png=args.save_png, png_path=args.png_path,
                      show=True, block=args.block)
 
