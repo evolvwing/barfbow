@@ -6,6 +6,8 @@
 
 `barfbow` generates OKLCh color palettes and previews them as a PNG with color-vision simulations, monochrome rendering, named swatches, and OKLCh walk wheels.
 
+Choose the number of colors (`N`), then set how many times the palette should orbit the Hue wheel (`H-orbits`; positive values move clockwise). Colors cycle between two luminance levels (`L1` and `L2`) to add step-to-step contrast. Chroma can also shift in blocks, letting the palette move from vivid to muted colors, or the reverse.
+
 ![barfbow palette preview](docs/barfbow_preview.png)
 
 ## Install
