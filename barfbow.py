@@ -260,8 +260,11 @@ def chroma_plan(N: int, h_step: float, full_period: int, C_values: Tuple[float, 
 # -----------------------------
 # Visualization
 # -----------------------------
+WHEEL_MIN_LIGHTNESS = 5.0
+
 def oklch_wheel_xy(lightness: float, hue: float, radius: float) -> Tuple[float, float]:
-    radial_position = (1.0 - max(0.0, min(100.0, lightness)) / 100.0) * radius
+    clamped_lightness = max(WHEEL_MIN_LIGHTNESS, min(100.0, lightness))
+    radial_position = (100.0 - clamped_lightness) / (100.0 - WHEEL_MIN_LIGHTNESS) * radius
     return radial_position * sin(radians(hue)), radial_position * cos(radians(hue))
 
 WHEEL_X_MAX = 4.0
@@ -297,7 +300,7 @@ def draw_oklch_wheel(ax, plt, rows: List[Tuple[str, float, float, float]], chrom
     for radial_index in range(radial_steps):
         inner = radius * radial_index / radial_steps
         outer = radius * (radial_index + 1) / radial_steps
-        lightness = 100.0 - (radial_index + 0.5) * 100.0 / radial_steps
+        lightness = 100.0 - (radial_index + 0.5) * (100.0 - WHEEL_MIN_LIGHTNESS) / radial_steps
         for hue_index in range(hue_steps):
             h_start = hue_index * 360.0 / hue_steps
             h_end = (hue_index + 1) * 360.0 / hue_steps
