@@ -119,12 +119,6 @@ The PNG preview includes:
 
 The color-name dataset is bundled locally in `color_names_meodai.csv` and is derived from the open `meodai/color-names` project.
 
-## Test
-
-```bash
-python -m unittest discover -s tests
-```
-
 ## License
 
 MIT. See `LICENSE`.
