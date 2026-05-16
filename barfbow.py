@@ -260,7 +260,7 @@ def chroma_plan(N: int, h_step: float, full_period: int, C_values: Tuple[float, 
 # -----------------------------
 # Visualization
 # -----------------------------
-WHEEL_MIN_LIGHTNESS = 10.0
+WHEEL_MIN_LIGHTNESS = 15.0
 
 def oklch_wheel_xy(lightness: float, hue: float, radius: float) -> Tuple[float, float]:
     clamped_lightness = max(WHEEL_MIN_LIGHTNESS, min(100.0, lightness))
