@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+palette_*.csv
+palette_*.png
+barfbow_v*.png
