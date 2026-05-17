@@ -121,6 +121,16 @@ The PNG preview includes:
 
 The color-name dataset is bundled locally in `color_names_meodai.csv` and is derived from the open `meodai/color-names` project.
 
+## Examples
+
+<p align="center">
+  <img src="docs/barfbow_examples-02.jpg" alt="barfbow categorical palette example" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/barfbow_examples-01.jpg" alt="barfbow sequential palette example" width="100%">
+</p>
+
 ## License
 
 MIT. See `LICENSE`.
