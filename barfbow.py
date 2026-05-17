@@ -473,8 +473,9 @@ def chroma_title_phrase(N: int, H_orbits: float, L_cycles: float, c1: float, del
 
 def palette_title(N: int, H_orbits: float, h1: float, L1: float, L2: float, L_cycles: float,
                   c1: float, deltaC: float | None, C_mode: str) -> str:
+    hue_step = H_orbits * 360.0 / N
     return "\n".join((
-        f"N = {N} colors with initial Hue (h1) = {format_number(h1)}° and {hue_orbit_phrase(H_orbits)} around the 360° Hue wheel",
+        f"N = {N} colors with initial Hue (h1) = {format_number(h1)}° and {hue_orbit_phrase(H_orbits)} around the 360° Hue wheel ({hue_step:.1f}° steps)",
         f"Luminance : {format_number(L1)}% to {format_number(L2)}% with {format_number(L_cycles)} cycles",
         chroma_title_phrase(N, H_orbits, L_cycles, c1, deltaC, C_mode),
     ))
