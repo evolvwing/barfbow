@@ -15,7 +15,7 @@ from typing import List, Tuple
 import argparse
 import csv
 import sys
-from math import cos, radians, sin
+from math import ceil, cos, radians, sin
 from pathlib import Path
 
 
@@ -30,7 +30,7 @@ DEFAULT_COMMAND = (
 # Color conversions
 # -----------------------------
 def oklch_to_srgb_hex(lightness: float, chroma: float, hue_degrees: float) -> str:
-    L = max(0.0, min(100.0, lightness)) / 100.0
+    L = lightness / 100.0
     chroma = chroma_to_oklch_chroma(chroma)
     chroma = fit_oklch_chroma_to_srgb(L, chroma, hue_degrees)
     r_linear, g_linear, b_linear = oklch_to_linear_srgb(L, chroma, hue_degrees)
@@ -222,6 +222,45 @@ def build_palette(N: int, H_orbits: float, h1: float, L1: float, L2: float, L_cy
         hex_code = oklch_to_srgb_hex(L, C, h)
         rows.append((hex_code, L, C, h))
     chroma_ranges = chroma_plan(N, h_step, full_period, C_values, C_mode)
+    return H, half_period, chroma_ranges, rows
+
+def build_divergent_palette(N: int, h1: float, h2: float, L1: float, L2: float,
+                            c1: float, c2: float):
+    L_cycles = 1.0
+    H = max(1, int(round((N - 1) / (2.0 * L_cycles))))
+    half_period = H
+    split_index = int(ceil(N / 2.0))
+    second_block_count = N - split_index
+
+    def L_i(i: int) -> float:
+        if i < split_index:
+            if split_index == 1:
+                return L2
+            progress = i / float(split_index - 1)
+            return L1 + progress * (L2 - L1)
+        if second_block_count <= 1:
+            return L2
+        if N % 2 == 1:
+            progress = (i - split_index + 1) / float(second_block_count)
+        else:
+            progress = (i - split_index) / float(second_block_count - 1)
+        return L2 + progress * (L1 - L2)
+
+    rows = []
+    for i in range(N):
+        L = round(L_i(i), 2)
+        if i < split_index:
+            C = round(c1, 2)
+            h = round(h1, 2)
+        else:
+            C = round(c2, 2)
+            h = round(h2, 2)
+        hex_code = oklch_to_srgb_hex(L, C, h)
+        rows.append((hex_code, L, C, h))
+
+    chroma_ranges = [("c1", c1, 0, split_index - 1)]
+    if split_index < N:
+        chroma_ranges.append(("c2", c2, split_index, N - 1))
     return H, half_period, chroma_ranges, rows
 
 def chroma_at_index(index: int, N: int, h_step: float, full_period: int, C_values: Tuple[float, ...], C_mode: str) -> float:
@@ -480,6 +519,14 @@ def palette_title(N: int, H_orbits: float, h1: float, L1: float, L2: float, L_cy
         chroma_title_phrase(N, H_orbits, L_cycles, c1, deltaC, C_mode),
     ))
 
+def divergent_palette_title(N: int, h1: float, h2: float, L1: float, L2: float,
+                            c1: float, c2: float, split_index: int) -> str:
+    return "\n".join((
+        f"N = {N} divergent colors with Hue 1 = {format_number(h1)}° and Hue 2 = {format_number(h2)}°",
+        f"Luminance : {format_number(L1)}% to {format_number(L2)}% with 1 cycle",
+        f"Chroma : c1 = {format_number(c1)}% for colors 1–{split_index}; c2 = {format_number(c2)}% for colors {split_index + 1}–{N}",
+    ))
+
 def normalized_C_mode(value: str) -> str:
     normalized = value.strip()
     aliases = {
@@ -508,6 +555,9 @@ def deltaC_value(value: str) -> float | None:
     except ValueError as error:
         raise argparse.ArgumentTypeError("Expected a number, or 'none' to halve chroma each block.") from error
 
+def option_was_supplied(option_name: str) -> bool:
+    return any(argument == option_name or argument.startswith(f"{option_name}=") for argument in sys.argv[1:])
+
 # -----------------------------
 # Main
 # -----------------------------
@@ -523,14 +573,24 @@ def build_parser() -> argparse.ArgumentParser:
             "  barfbow C% is a 0..100 design scale: OKLCh C = C% * 0.0032.\n"
             "  C% 100 requests OKLCh C 0.320, or 80% of an OKLCh C 0.4 reference.\n"
             "  Out-of-sRGB colors are rendered with the highest fitting chroma for their L/h.\n\n"
+            "Luminance:\n"
+            "  In normal mode, L1 and L2 are clamped to 0..100.\n"
+            "  In --divergent mode only, out-of-range L values are allowed to steepen\n"
+            "  the rendered ramp. Final RGB still clips to displayable sRGB.\n\n"
             "C-mode:\n"
             "  L  L-cycle  change chroma after each full luminance cycle (default)\n"
             "  H  H-orbit  change chroma after each full hue orbit\n"
             "  k           change chroma every k colors; k is floored and made positive\n\n"
+            "Divergent mode:\n"
+            "  --divergent uses two fixed hues instead of hue stepping.\n"
+            "  Colors 1..ceil(N/2) use h1/c1; the rest use h2/(c1 + deltaC).\n"
+            "  In divergent mode, deltaC defaults to 0 unless explicitly provided.\n"
+            "  L-cycles is forced to 1. If --h2 is omitted, h2 defaults to h1 + 180.\n\n"
             "Examples:\n"
             "  python3 barfbow.py --N 200 --H-orbits 2 --c1 100 --save-png\n"
             "  python3 barfbow.py --N 80 --L-cycles 1.5 --C-mode H --deltaC -20\n"
-            "  python3 barfbow.py --N 80 --C-mode 12 --deltaC -20"
+            "  python3 barfbow.py --N 80 --C-mode 12 --deltaC -20\n"
+            "  python3 barfbow.py --divergent --N 16 --h1 340 --L1 50 --L2 80 --save-png"
         ),
     )
     parser.add_argument("--N", type=int, default=100,
@@ -539,6 +599,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Hue rotations across the palette; negative values reverse direction.")
     parser.add_argument("--h1", type=float, default=90.0,
                         help="Initial OKLCh hue angle in degrees. Wrapped into 0..360.")
+    parser.add_argument("--h2", type=float, default=None,
+                        help="Second OKLCh hue angle for --divergent. Defaults to h1 + 180.")
     parser.add_argument("--L1", type=float, default=30.0,
                         help="First OKLCh luminance endpoint, as a percentage.")
     parser.add_argument("--L2", type=float, default=85.0,
@@ -548,10 +610,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--c1", type=float, default=85.0,
                         help="Initial OKLCh chroma percentage. Clamped to 0..100.")
     parser.add_argument("--deltaC", type=deltaC_value, default=-30.0,
-                        help="Additive chroma step between blocks; use 'none' for halving instead.")
+                        help="Additive chroma step between blocks; use 'none' for halving instead. Defaults to 0 in --divergent if omitted.")
     parser.add_argument("--C-mode", type=normalized_C_mode, default="L",
                         metavar="{L,H,k}",
                         help="Chroma progression mode. Use L, H, or a positive integer k.")
+    parser.add_argument("--divergent", action="store_true",
+                        help="Use two fixed hue/chroma blocks: h1/c1 then h2/(c1 + deltaC), with L-cycles forced to 1.")
     parser.add_argument("--save-csv", action="store_true",
                         help="Write the generated Hex/L/C/h table to CSV.")
     parser.add_argument("--csv-path", type=str, default="palette_OKLCh.csv",
@@ -576,12 +640,19 @@ def main():
     N = max(2, int(args.N))
     H_orbits = float(args.H_orbits)
     h1 = float(args.h1) % 360.0
-    L1 = max(0.0, min(100.0, float(args.L1)))
-    L2 = max(0.0, min(100.0, float(args.L2)))
-    L_cycles = max(0.0001, float(args.L_cycles))
+    h2 = ((float(args.h2) if args.h2 is not None else h1 + 180.0) % 360.0)
+    if args.divergent:
+        L1 = float(args.L1)
+        L2 = float(args.L2)
+    else:
+        L1 = max(0.0, min(100.0, float(args.L1)))
+        L2 = max(0.0, min(100.0, float(args.L2)))
+    L_cycles = 1.0 if args.divergent else max(0.0001, float(args.L_cycles))
     H = max(1, int(round((N - 1) / (2.0 * L_cycles))))
     full_period = 2 * H
-    if args.C_mode == "H":
+    if args.divergent:
+        chroma_blocks = 2
+    elif args.C_mode == "H":
         h_step_for_blocks = H_orbits * (360.0 / N)
         chroma_blocks = max(1, int(abs(h_step_for_blocks) * (N - 1) // 360.0) + 1)
     elif args.C_mode == "L":
@@ -589,20 +660,29 @@ def main():
     else:
         chroma_blocks = max(1, ((N - 1) // int(args.C_mode)) + 1)
     c1 = max(0.0, min(100.0, float(args.c1)))
-    if args.deltaC is None:
+    deltaC = 0.0 if args.divergent and not option_was_supplied("--deltaC") else args.deltaC
+    if deltaC is None:
         C_values = tuple(max(0.0, min(100.0, c1 / (2 ** index))) for index in range(chroma_blocks))
     else:
-        deltaC = float(args.deltaC)
+        deltaC = float(deltaC)
         C_values = tuple(max(0.0, min(100.0, c1 + index * deltaC)) for index in range(chroma_blocks))
 
-    H, half_period, chroma_ranges, rows = build_palette(
-        N=N, H_orbits=H_orbits, h1=h1, L1=L1, L2=L2, L_cycles=L_cycles,
-        C_values=C_values, C_mode=args.C_mode
-    )
+    if args.divergent:
+        split_index = int(ceil(N / 2.0))
+        H, half_period, chroma_ranges, rows = build_divergent_palette(
+            N=N, h1=h1, h2=h2, L1=L1, L2=L2, c1=C_values[0], c2=C_values[1]
+        )
+    else:
+        H, half_period, chroma_ranges, rows = build_palette(
+            N=N, H_orbits=H_orbits, h1=h1, L1=L1, L2=L2, L_cycles=L_cycles,
+            C_values=C_values, C_mode=args.C_mode
+        )
 
     print(f"\nH = {H}  (half period = H = {half_period} steps)")
     joined = ", ".join(f"{name}={value:g} [{start}..{end}]" for name, value, start, end in chroma_ranges)
-    if args.C_mode == "H":
+    if args.divergent:
+        print(f"Divergent mode: h1={h1:g}, h2={h2:g}; L-cycles forced to 1; chroma blocks: {joined}")
+    elif args.C_mode == "H":
         print(f"C-mode H (H-orbit): chroma blocks shift after each full hue orbit: {joined}")
     elif args.C_mode == "L":
         print(f"C-mode L (L-cycle): chroma blocks shift after each full lightness cycle: {joined}")
@@ -615,7 +695,10 @@ def main():
         write_csv(args.csv_path, rows)
         print(f"\nSaved CSV to: {args.csv_path}")
 
-    title = palette_title(N, H_orbits, h1, L1, L2, L_cycles, c1, args.deltaC, args.C_mode)
+    if args.divergent:
+        title = divergent_palette_title(N, h1, h2, L1, L2, C_values[0], C_values[1], split_index)
+    else:
+        title = palette_title(N, H_orbits, h1, L1, L2, L_cycles, c1, deltaC, args.C_mode)
     show_swatch_grid(rows, chroma_ranges, title=title, L_cycles=L_cycles,
                      reverse_dot_fade=L1 > L2,
                      save_png=args.save_png, png_path=args.png_path,

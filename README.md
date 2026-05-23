@@ -62,11 +62,13 @@ python3 barfbow.py --N 100 --H-orbits 2.5 --h1 90 --L1 30 --L2 85 --L-cycles 3.5
 - `--N`: number of colors.
 - `--H-orbits`: number of Hue orbits around the 360 degree Hue wheel. Negative values reverse direction.
 - `--h1`: initial Hue angle in degrees.
-- `--L1` / `--L2`: OKLCh luminance endpoints, as percentages.
+- `--h2`: second Hue angle for divergent palettes. Defaults to `h1 + 180`.
+- `--L1` / `--L2`: OKLCh luminance endpoints, as percentages. Normal palettes clamp these to `0..100`; divergent palettes allow out-of-range values for steeper ramps.
 - `--L-cycles`: number of luminance cycles from `L1` to `L2` and back.
 - `--c1`: initial barfbow chroma percentage, clamped to `0..100`.
-- `--deltaC`: chroma change between blocks. Use a number such as `-30`, or use `none` to halve each new block.
+- `--deltaC`: chroma change between blocks. Use a number such as `-30`, or use `none` to halve each new block. In divergent mode, it defaults to `0` if omitted.
 - `--C-mode`: chroma progression mode.
+- `--divergent`: use a two-sided palette with fixed Hue blocks instead of Hue stepping.
 - `--save-csv` / `--csv-path`: write the generated table.
 - `--save-png` / `--png-path`: save the PNG preview.
 
@@ -108,6 +110,22 @@ and clamped to the `0..100` range. With `--deltaC none`, they become:
 c1, c1 / 2, c1 / 4, ...
 ```
 
+## Divergent Mode
+
+Use `--divergent` when you want a palette that separates into two opposing color families instead of walking continuously around the Hue wheel. This is useful for two-sided scales, contrasts, before/after groups, negative/positive values, or any palette where the middle should be the brightest point and each side should fade back toward a darker endpoint.
+
+`--divergent` builds a two-sided palette. It keeps `L-cycles` fixed at `1`, uses `h1` for colors `1..ceil(N/2)`, then uses `h2` for the remaining colors. If `--h2` is not provided, it defaults to the opposite Hue: `h1 + 180`.
+
+In divergent mode only, `L1` and `L2` are not clamped to `0..100`. Out-of-range luminance values can be used to make the ramp steeper; final RGB still clips to displayable sRGB.
+
+Odd values of `N` produce a symmetric divergent palette because there is one shared center color at `L2`. For example, use `--N 201` instead of `--N 200` when you want 100 colors on each side plus one central peak color.
+
+The first block uses chroma `c1`; the second block uses `c1 + deltaC`, clamped to `0..100`. If `--deltaC` is omitted in divergent mode, it defaults to `0`, so both sides use the same chroma.
+
+```bash
+python barfbow.py --divergent --N 16 --h1 340 --L1 50 --L2 80 --c1 85 --deltaC -30 --save-png
+```
+
 ## Output
 
 The PNG preview includes:
@@ -122,6 +140,18 @@ The PNG preview includes:
 The color-name dataset is bundled locally in `color_names_meodai.csv` and is derived from the open `meodai/color-names` project.
 
 ## Examples
+
+### Divergent blue-red ramp
+
+This example uses divergent mode to make a two-sided palette with 300 colors. The first half moves from dark blue to pale blue using `h1=260`; the second half moves from pale red back to dark red using `h2=30`. Because `N=300` is even, the brightest point at `L2=98` appears once at the end of the first block and once at the start of the second block.
+
+```bash
+python barfbow.py --divergent --N 300 --h1 260 --h2 30 --L1 30 --L2 98 --save-png
+```
+
+<p align="center">
+  <img src="docs/barfbow_divergent_N300_h260_h30_L30_98.png" alt="barfbow divergent 300-color blue-red ramp example" width="100%">
+</p>
 
 <p align="center">
   <img src="docs/barfbow_examples-02.jpg" alt="barfbow categorical palette example" width="100%">
