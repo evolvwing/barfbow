@@ -153,9 +153,13 @@ python barfbow.py --divergent --N 300 --h1 260 --h2 30 --L1 30 --L2 98 --save-pn
   <img src="docs/barfbow_divergent_N300_h260_h30_L30_98.png" alt="barfbow divergent 300-color blue-red ramp example" width="100%">
 </p>
 
+### Categorical data
+
 <p align="center">
   <img src="docs/barfbow_examples-02.jpg" alt="barfbow categorical palette example" width="100%">
 </p>
+
+### Sequential/continuous palette
 
 <p align="center">
   <img src="docs/barfbow_examples-01.jpg" alt="barfbow sequential palette example" width="100%">
