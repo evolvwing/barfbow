@@ -143,14 +143,14 @@ The color-name dataset is bundled locally in `color_names_meodai.csv` and is der
 
 ### Divergent blue-red ramp
 
-This example uses divergent mode to make a two-sided palette with 300 colors. The first half moves from dark blue to pale blue using `h1=260`; the second half moves from pale red back to dark red using `h2=30`. Because `N=300` is even, the brightest point at `L2=98` appears once at the end of the first block and once at the start of the second block.
+This example uses divergent mode to make a two-sided palette with 301 colors. The first half moves from blue to pale blue using `h1=260`; the second half moves from pale red back to red using `h2=30`. Because `N=301` is odd, the brightest point at `L2=98` appears once as a shared center color.
 
 ```bash
-python barfbow.py --divergent --N 300 --h1 260 --h2 30 --L1 30 --L2 98 --save-png
+python barfbow.py --divergent --N 301 --h1 260 --h2 30 --L1 50 --L2 98 --save-png
 ```
 
 <p align="center">
-  <img src="docs/barfbow_divergent_N300_h260_h30_L30_98.png" alt="barfbow divergent 300-color blue-red ramp example" width="100%">
+  <img src="docs/barfbow_divergent_N301_h260_h30_L50_98.png" alt="barfbow divergent 301-color blue-red ramp example" width="100%">
 </p>
 
 ### Categorical data
