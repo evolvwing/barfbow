@@ -170,6 +170,7 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn('.controls:has(#divergent:checked) #h2-control', APP_CSS)
         self.assertIn('.controls:has(#divergent:checked) #c-mode-control', APP_CSS)
         self.assertIn('.controls:has(#divergent:checked) #c-interval-control', APP_CSS)
+        self.assertIn('#c-interval-control {\n  display:none;', APP_CSS)
         self.assertIn('id="c-interval-control"', markup)
         self.assertIn('id="chroma-controls"', markup)
         self.assertIn('id="chroma-progression-controls"', markup)

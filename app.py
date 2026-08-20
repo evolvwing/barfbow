@@ -557,13 +557,7 @@ body { margin:0; color:var(--ink); background:var(--paper); font-family:Inter,ui
 }
 .controls:has(#divergent:checked) #c-mode-control,
 .controls:has(#divergent:checked) #c-interval-control {
-  opacity:.34;
-  filter:grayscale(1);
-  cursor:not-allowed;
-}
-.controls:has(#divergent:checked) #c-mode-control .form-group,
-.controls:has(#divergent:checked) #c-interval-control .form-group {
-  pointer-events:none;
+  display:none;
 }
 .download-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:25px; }
 .download-row .btn { border:1px solid #555; color:white; background:#292929; font-size:12px; }
