@@ -4,13 +4,16 @@
   <img src="docs/barfbow_logo1.png" alt="barfbow unicorn logo" width="420">
 </p>
 
-`barfbow` generates OKLCh color palettes and previews them as a PNG with color-vision simulations, monochrome rendering, named swatches, and OKLCh walk wheels.
+`barfbow` is an interactive Shiny palette laboratory for designing OKLCh color
+palettes in real time. It includes color-vision simulations, monochrome rendering,
+named swatches, OKLCh walk wheels, presets, deterministic palette names, shareable
+links, and CSV, PNG, and R downloads.
 
 Choose the number of colors (`N`), then set how many times the palette should orbit the Hue wheel (`H-orbits`; positive values move clockwise). Colors cycle between two luminance levels (`L1` and `L2`) to add step-to-step contrast. Chroma can also shift in blocks, letting the palette move from vivid to muted colors, or the reverse.
 
 ![barfbow palette preview](docs/barfbow_preview.png)
 
-## Install
+## Run the Shiny app
 
 Clone the repository, create a virtual environment, and install the dependencies:
 
@@ -23,17 +26,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-You can also install the local command in editable mode:
-
-```bash
-python -m pip install -e .
-```
-
-After that, run either `python barfbow.py ...` from the repository or the installed `barfbow ...` command.
-
-## Interactive Shiny app
-
-Launch the local app, then open the displayed address in Chrome:
+Launch the app, then open the displayed address in Chrome:
 
 ```bash
 python3 -m shiny run --reload app.py
@@ -51,7 +44,17 @@ examples documented below, with the sequential example adapted to the app's
 1,000-color limit; every value remains editable afterward.
 The downloaded PNG is rendered by the same Matplotlib code as the CLI.
 
-## Quick Start
+## Command-line interface
+
+The Python palette engine and command-line interface remain supported as a
+secondary way to generate palettes. Install the local command in editable mode:
+
+```bash
+python -m pip install -e .
+```
+
+After that, run either `python barfbow.py ...` from the repository or the
+installed `barfbow ...` command.
 
 Run with the default command:
 
@@ -184,6 +187,14 @@ python barfbow.py --divergent --N 301 --h1 260 --h2 30 --L1 50 --L2 98 --save-pn
 <p align="center">
   <img src="docs/barfbow_examples-01.jpg" alt="barfbow sequential palette example" width="100%">
 </p>
+
+## Legacy release
+
+The original pre-Shiny command-line release is preserved in Git history at the
+[`legacy-v0.1.0`](https://github.com/evolvwing/barfbow/tree/legacy-v0.1.0) tag.
+It remains available for reproducibility, while version 1.0 and later present
+the Shiny app as the primary barfbow interface. The current `barfbow.py` is not
+legacy: it is the supported palette engine used by both the app and CLI.
 
 ## License
 
