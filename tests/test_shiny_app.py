@@ -5,6 +5,7 @@ import unittest
 import barfbow
 from app import (
     PALETTE_ADJECTIVES,
+    PALETTE_ADJECTIVE_ORDER,
     PALETTE_COMPANION_GROUPS,
     PALETTE_COMPANIONS,
     PALETTE_NAME_GENDERS,
@@ -21,6 +22,7 @@ from app import (
     make_palette_state,
     n_to_slider_position,
     palette_adjective,
+    order_palette_name,
     parse_shared_parameters,
     preview_number_labels,
     preview_html,
@@ -128,6 +130,16 @@ class ShinyPaletteStateTests(unittest.TestCase):
             generate_palette_name(rows),
             generate_palette_name(rows + [("#FFCC00", 80.0, 90.0, 100.0)]),
         )
+        self.assertEqual(generate_palette_name([]), "lisboa_sereno")
+
+    def test_palette_names_use_romance_adjective_order(self):
+        self.assertEqual(
+            PALETTE_ADJECTIVE_ORDER,
+            {"french": "after", "iberic": "after", "italian": "after"},
+        )
+        self.assertEqual(order_palette_name("sofia", "vive", "french"), "sofia_vive")
+        self.assertEqual(order_palette_name("lisboa", "radiante", "iberic"), "lisboa_radiante")
+        self.assertEqual(order_palette_name("ravenna", "vivace", "italian"), "ravenna_vivace")
 
     def test_palette_companions_are_region_balanced_and_slug_safe(self):
         self.assertEqual(len(PALETTE_COMPANION_GROUPS), 7)

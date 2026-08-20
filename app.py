@@ -160,6 +160,15 @@ PALETTE_NAME_GENDERS = {
     "kiri": "neutral", "maia": "f", "moana": "f", "tane": "m", "wiremu": "m",
 }
 
+# Descriptive adjectives normally follow the noun in these Romance-language
+# families. Keeping this as data makes it straightforward to add a language or
+# a deliberately preposed class of adjectives later.
+PALETTE_ADJECTIVE_ORDER = {
+    "french": "after",
+    "iberic": "after",
+    "italian": "after",
+}
+
 
 README_PRESETS: dict[str, dict[str, object]] = {
     "default": {
@@ -335,26 +344,41 @@ def slider_position_to_h_orbits(position: int | float) -> float:
     return position / 10.0
 
 
-def palette_adjective(family: str, companion: str, digest: bytes) -> str:
-    """Choose an adjective that agrees with a name and balances place names."""
+def palette_adjective_details(family: str, companion: str, digest: bytes) -> tuple[str, str]:
+    """Choose an agreeing adjective and return its Romance language family."""
     choices = PALETTE_ADJECTIVES[family]
     gender = PALETTE_NAME_GENDERS.get(companion, "place")
     if gender == "neutral":
         invariant = tuple(pair for pair in choices if pair[0] == pair[1])
-        return invariant[int.from_bytes(digest[:2], "big") % len(invariant)][0]
+        masculine, _feminine, language = invariant[
+            int.from_bytes(digest[:2], "big") % len(invariant)
+        ]
+        return masculine, language
 
-    masculine, feminine, _language = choices[int.from_bytes(digest[:2], "big") % len(choices)]
+    masculine, feminine, language = choices[int.from_bytes(digest[:2], "big") % len(choices)]
     if gender == "f":
-        return feminine
+        return feminine, language
     if gender == "m":
-        return masculine
-    return (masculine, feminine)[int.from_bytes(digest[4:6], "big") % 2]
+        return masculine, language
+    return (masculine, feminine)[int.from_bytes(digest[4:6], "big") % 2], language
+
+
+def palette_adjective(family: str, companion: str, digest: bytes) -> str:
+    """Choose an adjective that agrees with a name and balances place names."""
+    return palette_adjective_details(family, companion, digest)[0]
+
+
+def order_palette_name(companion: str, adjective: str, language: str) -> str:
+    """Order a palette epithet according to its adjective's language family."""
+    if PALETTE_ADJECTIVE_ORDER.get(language, "after") == "before":
+        return f"{adjective}_{companion}"
+    return f"{companion}_{adjective}"
 
 
 def generate_palette_name(rows: list[tuple[str, float, float, float]]) -> str:
     """Return a deterministic, feature-aware Romance-style palette slug."""
     if not rows:
-        return "sereno_lisboa"
+        return "lisboa_sereno"
 
     average_lightness = sum(row[1] for row in rows) / len(rows)
     average_chroma = sum(row[2] for row in rows) / len(rows)
@@ -383,8 +407,8 @@ def generate_palette_name(rows: list[tuple[str, float, float, float]]) -> str:
     ).encode("ascii")
     digest = hashlib.sha256(fingerprint).digest()
     companion = PALETTE_COMPANIONS[int.from_bytes(digest[2:4], "big") % len(PALETTE_COMPANIONS)]
-    adjective = palette_adjective(family, companion, digest)
-    return f"{adjective}_{companion}"
+    adjective, language = palette_adjective_details(family, companion, digest)
+    return order_palette_name(companion, adjective, language)
 
 
 def r_palette_script(rows: list[tuple[str, float, float, float]], palette_name: str) -> str:
