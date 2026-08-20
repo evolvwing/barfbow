@@ -34,29 +34,79 @@ class PaletteState:
     divergent: bool
 
 
-PALETTE_ADJECTIVES: dict[str, tuple[tuple[str, str], ...]] = {
-    # Entries are (masculine, feminine); identical forms are gender-invariant.
-    "vivid": (("ardente", "ardente"), ("brillante", "brillante"),
-              ("radiante", "radiante"), ("vivace", "vivace"),
-              ("luminoso", "luminosa")),
-    "muted": (("brumoso", "brumosa"), ("calme", "calme"),
-              ("morbido", "morbida"), ("sereno", "serena"),
-              ("suave", "suave")),
-    "dark": (("notturno", "notturna"), ("oscuro", "oscura"),
-             ("profondo", "profonda"), ("sombre", "sombre"),
-             ("vesperal", "vesperal")),
-    "light": (("chiaro", "chiara"), ("claro", "clara"),
-              ("dorado", "dorada"), ("solaire", "solaire"),
-              ("luminoso", "luminosa")),
-    "warm": (("ambrato", "ambrata"), ("ardente", "ardente"),
-             ("dorato", "dorata"), ("solare", "solare"),
-             ("vermiglio", "vermiglia")),
-    "cool": (("azulado", "azulada"), ("celeste", "celeste"),
-             ("glacial", "glacial"), ("marino", "marina"),
-             ("sereno", "serena")),
-    "balanced": (("armonico", "armonica"), ("gentile", "gentile"),
-                 ("quieto", "quieta"), ("sottile", "sottile"),
-                 ("tranquilo", "tranquila")),
+PALETTE_ADJECTIVES: dict[str, tuple[tuple[str, str, str], ...]] = {
+    # Entries are (masculine, feminine, language family); identical forms are
+    # gender-invariant. Accents are omitted to keep filenames and URLs portable.
+    "vivid": (
+        ("vif", "vive", "french"), ("ardent", "ardente", "french"),
+        ("joyeux", "joyeuse", "french"), ("intense", "intense", "french"),
+        ("vivant", "vivante", "french"), ("sature", "saturee", "french"),
+        ("vivo", "viva", "iberic"), ("alegre", "alegre", "iberic"),
+        ("fuerte", "fuerte", "iberic"), ("radiante", "radiante", "iberic"),
+        ("nitido", "nitida", "iberic"),
+        ("vivace", "vivace", "italian"), ("acceso", "accesa", "italian"),
+        ("intenso", "intensa", "italian"), ("gaio", "gaia", "italian"),
+    ),
+    "muted": (
+        ("calme", "calme", "french"), ("doux", "douce", "french"),
+        ("pale", "pale", "french"), ("mat", "mate", "french"),
+        ("sobre", "sobre", "french"), ("feutre", "feutree", "french"),
+        ("suave", "suave", "iberic"), ("tenue", "tenue", "iberic"),
+        ("opaco", "opaca", "iberic"), ("calmo", "calma", "iberic"),
+        ("mate", "mate", "iberic"),
+        ("fioco", "fioca", "italian"), ("velato", "velata", "italian"),
+        ("spento", "spenta", "italian"), ("pacato", "pacata", "italian"),
+    ),
+    "dark": (
+        ("noir", "noire", "french"), ("obscur", "obscure", "french"),
+        ("sombre", "sombre", "french"), ("bruni", "brunie", "french"),
+        ("dense", "dense", "french"), ("profond", "profonde", "french"),
+        ("negro", "negra", "iberic"), ("oscuro", "oscura", "iberic"),
+        ("hondo", "honda", "iberic"), ("umbrio", "umbria", "iberic"),
+        ("nocturno", "nocturna", "iberic"),
+        ("scuro", "scura", "italian"), ("fosco", "fosca", "italian"),
+        ("cupo", "cupa", "italian"), ("tetro", "tetra", "italian"),
+    ),
+    "light": (
+        ("clair", "claire", "french"), ("blond", "blonde", "french"),
+        ("dore", "doree", "french"), ("leger", "legere", "french"),
+        ("solaire", "solaire", "french"), ("laiteux", "laiteuse", "french"),
+        ("claro", "clara", "iberic"), ("leve", "leve", "iberic"),
+        ("dorado", "dorada", "iberic"), ("palido", "palida", "iberic"),
+        ("blanco", "blanca", "iberic"),
+        ("chiaro", "chiara", "italian"), ("lieve", "lieve", "italian"),
+        ("aureo", "aurea", "italian"), ("bianco", "bianca", "italian"),
+    ),
+    "warm": (
+        ("chaud", "chaude", "french"), ("ambre", "ambree", "french"),
+        ("cuivre", "cuivree", "french"), ("fauve", "fauve", "french"),
+        ("roux", "rousse", "french"), ("torride", "torride", "french"),
+        ("calido", "calida", "iberic"), ("tibio", "tibia", "iberic"),
+        ("rojizo", "rojiza", "iberic"), ("solar", "solar", "iberic"),
+        ("caldo", "calda", "italian"), ("tiepido", "tiepida", "italian"),
+        ("ramato", "ramata", "italian"), ("fulvo", "fulva", "italian"),
+        ("solare", "solare", "italian"),
+    ),
+    "cool": (
+        ("frais", "fraiche", "french"), ("glace", "glacee", "french"),
+        ("bleute", "bleutee", "french"), ("marin", "marine", "french"),
+        ("polaire", "polaire", "french"), ("givre", "givree", "french"),
+        ("frio", "fria", "iberic"), ("glacial", "glacial", "iberic"),
+        ("azulado", "azulada", "iberic"), ("marino", "marina", "iberic"),
+        ("freddo", "fredda", "italian"), ("gelido", "gelida", "italian"),
+        ("azzurro", "azzurra", "italian"), ("ceruleo", "cerulea", "italian"),
+        ("boreale", "boreale", "italian"),
+    ),
+    "balanced": (
+        ("neutre", "neutre", "french"), ("egal", "egale", "french"),
+        ("stable", "stable", "french"), ("subtil", "subtile", "french"),
+        ("pose", "posee", "french"), ("uni", "unie", "french"),
+        ("neutro", "neutra", "iberic"), ("sereno", "serena", "iberic"),
+        ("quieto", "quieta", "iberic"), ("estable", "estable", "iberic"),
+        ("equo", "equa", "italian"), ("placido", "placida", "italian"),
+        ("gentile", "gentile", "italian"), ("armonico", "armonica", "italian"),
+        ("sottile", "sottile", "italian"),
+    ),
 }
 
 PALETTE_COMPANION_GROUPS: dict[str, tuple[str, ...]] = {
@@ -282,7 +332,7 @@ def palette_adjective(family: str, companion: str, digest: bytes) -> str:
         invariant = tuple(pair for pair in choices if pair[0] == pair[1])
         return invariant[int.from_bytes(digest[:2], "big") % len(invariant)][0]
 
-    masculine, feminine = choices[int.from_bytes(digest[:2], "big") % len(choices)]
+    masculine, feminine, _language = choices[int.from_bytes(digest[:2], "big") % len(choices)]
     if gender == "f":
         return feminine
     if gender == "m":

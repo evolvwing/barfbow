@@ -140,16 +140,29 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertTrue(set(PALETTE_NAME_GENDERS).issubset(PALETTE_COMPANIONS))
 
     def test_palette_adjectives_agree_with_names(self):
-        luminoso_digest = bytes.fromhex("000400000000")
-        self.assertEqual(palette_adjective("vivid", "teo", luminoso_digest), "luminoso")
-        self.assertEqual(palette_adjective("vivid", "sofia", luminoso_digest), "luminosa")
-        neutral = palette_adjective("vivid", "alex", luminoso_digest)
+        vif_digest = bytes.fromhex("000000000000")
+        self.assertEqual(palette_adjective("vivid", "teo", vif_digest), "vif")
+        self.assertEqual(palette_adjective("vivid", "sofia", vif_digest), "vive")
+        neutral = palette_adjective("vivid", "alex", vif_digest)
         self.assertIn(neutral, {pair[0] for pair in PALETTE_ADJECTIVES["vivid"] if pair[0] == pair[1]})
-        self.assertEqual(palette_adjective("vivid", "lisboa", luminoso_digest), "luminoso")
+        self.assertEqual(palette_adjective("vivid", "lisboa", vif_digest), "vif")
         self.assertEqual(
-            palette_adjective("vivid", "lisboa", bytes.fromhex("000400000001")),
-            "luminosa",
+            palette_adjective("vivid", "lisboa", bytes.fromhex("000000000001")),
+            "vive",
         )
+
+    def test_palette_adjective_language_mix_and_length(self):
+        entries = tuple(entry for family in PALETTE_ADJECTIVES.values() for entry in family)
+        self.assertEqual(len(entries), 105)
+        self.assertEqual(len({entry[0] for entry in entries}), 105)
+        self.assertTrue(all(any(entry[0] == entry[1] for entry in family) for family in PALETTE_ADJECTIVES.values()))
+        self.assertEqual(
+            {language: sum(entry[2] == language for entry in entries) for language in {"french", "iberic", "italian"}},
+            {"french": 42, "iberic": 32, "italian": 31},
+        )
+        forms = tuple(form for entry in entries for form in entry[:2])
+        self.assertGreaterEqual(sum(len(form) <= 7 for form in forms) / len(forms), 0.9)
+        self.assertTrue(all(re.fullmatch(r"[a-z]+", form) for form in forms))
 
     def test_low_cycle_preview_hides_chroma_details(self):
         state = make_palette_state(
