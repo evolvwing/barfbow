@@ -4,8 +4,10 @@ import unittest
 
 import barfbow
 from app import (
+    PALETTE_ADJECTIVES,
     PALETTE_COMPANION_GROUPS,
     PALETTE_COMPANIONS,
+    PALETTE_NAME_GENDERS,
     APP_CSS,
     DEPENDENT_CONTROL_JS,
     README_PRESETS,
@@ -17,6 +19,7 @@ from app import (
     hue_slider_css,
     make_palette_state,
     n_to_slider_position,
+    palette_adjective,
     parse_shared_parameters,
     preview_number_labels,
     preview_html,
@@ -130,6 +133,23 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertEqual({len(tokens) for tokens in PALETTE_COMPANION_GROUPS.values()}, {10})
         self.assertEqual(len(PALETTE_COMPANIONS), len(set(PALETTE_COMPANIONS)))
         self.assertTrue(all(re.fullmatch(r"[a-z]+", token) for token in PALETTE_COMPANIONS))
+        self.assertEqual(
+            {gender: tuple(PALETTE_NAME_GENDERS.values()).count(gender) for gender in {"f", "m", "neutral"}},
+            {"f": 14, "m": 14, "neutral": 7},
+        )
+        self.assertTrue(set(PALETTE_NAME_GENDERS).issubset(PALETTE_COMPANIONS))
+
+    def test_palette_adjectives_agree_with_names(self):
+        luminoso_digest = bytes.fromhex("000400000000")
+        self.assertEqual(palette_adjective("vivid", "teo", luminoso_digest), "luminoso")
+        self.assertEqual(palette_adjective("vivid", "sofia", luminoso_digest), "luminosa")
+        neutral = palette_adjective("vivid", "alex", luminoso_digest)
+        self.assertIn(neutral, {pair[0] for pair in PALETTE_ADJECTIVES["vivid"] if pair[0] == pair[1]})
+        self.assertEqual(palette_adjective("vivid", "lisboa", luminoso_digest), "luminoso")
+        self.assertEqual(
+            palette_adjective("vivid", "lisboa", bytes.fromhex("000400000001")),
+            "luminosa",
+        )
 
     def test_low_cycle_preview_hides_chroma_details(self):
         state = make_palette_state(

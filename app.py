@@ -34,14 +34,29 @@ class PaletteState:
     divergent: bool
 
 
-PALETTE_ADJECTIVES: dict[str, tuple[str, ...]] = {
-    "vivid": ("ardente", "brillante", "radiante", "vivace", "luminoso"),
-    "muted": ("brumoso", "calme", "morbido", "sereno", "suave"),
-    "dark": ("notturno", "oscuro", "profondo", "sombre", "vesperal"),
-    "light": ("chiaro", "claro", "dorado", "solaire", "luminoso"),
-    "warm": ("ambrato", "ardente", "dorato", "solare", "vermiglio"),
-    "cool": ("azulado", "celeste", "glacial", "marino", "sereno"),
-    "balanced": ("armonico", "gentile", "quieto", "sottile", "tranquilo"),
+PALETTE_ADJECTIVES: dict[str, tuple[tuple[str, str], ...]] = {
+    # Entries are (masculine, feminine); identical forms are gender-invariant.
+    "vivid": (("ardente", "ardente"), ("brillante", "brillante"),
+              ("radiante", "radiante"), ("vivace", "vivace"),
+              ("luminoso", "luminosa")),
+    "muted": (("brumoso", "brumosa"), ("calme", "calme"),
+              ("morbido", "morbida"), ("sereno", "serena"),
+              ("suave", "suave")),
+    "dark": (("notturno", "notturna"), ("oscuro", "oscura"),
+             ("profondo", "profonda"), ("sombre", "sombre"),
+             ("vesperal", "vesperal")),
+    "light": (("chiaro", "chiara"), ("claro", "clara"),
+              ("dorado", "dorada"), ("solaire", "solaire"),
+              ("luminoso", "luminosa")),
+    "warm": (("ambrato", "ambrata"), ("ardente", "ardente"),
+             ("dorato", "dorata"), ("solare", "solare"),
+             ("vermiglio", "vermiglia")),
+    "cool": (("azulado", "azulada"), ("celeste", "celeste"),
+             ("glacial", "glacial"), ("marino", "marina"),
+             ("sereno", "serena")),
+    "balanced": (("armonico", "armonica"), ("gentile", "gentile"),
+                 ("quieto", "quieta"), ("sottile", "sottile"),
+                 ("tranquilo", "tranquila")),
 }
 
 PALETTE_COMPANION_GROUPS: dict[str, tuple[str, ...]] = {
@@ -49,15 +64,15 @@ PALETTE_COMPANION_GROUPS: dict[str, tuple[str, ...]] = {
     # tokens, so no region dominates the deterministic selection.
     "africa": (
         "accra", "aswan", "dakar", "kigali", "lagos",
-        "amara", "chidi", "imani", "nia", "zuri",
+        "amara", "chidi", "kwame", "nia", "zuri",
     ),
     "americas": (
         "cusco", "havana", "lima", "oaxaca", "quito",
-        "alba", "ines", "luz", "maya", "noa",
+        "alba", "ines", "mateo", "noa", "tiago",
     ),
     "east_asia": (
         "busan", "kyoto", "osaka", "seoul", "taipei",
-        "aiko", "hana", "kenji", "mei", "yuna",
+        "aiko", "haruto", "kenji", "mei", "ren",
     ),
     "south_southeast_asia": (
         "bali", "hanoi", "jaipur", "kathmandu", "kochi",
@@ -65,15 +80,15 @@ PALETTE_COMPANION_GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "west_central_asia": (
         "amman", "baku", "beirut", "bukhara", "samarkand",
-        "amir", "laila", "omar", "sana", "tariq",
+        "amir", "deniz", "laila", "omar", "sana",
     ),
     "europe": (
         "arles", "coimbra", "lisboa", "ravenna", "sevilla",
-        "freja", "luka", "sofia", "teo", "vesna",
+        "alex", "freja", "luka", "sofia", "teo",
     ),
     "oceania": (
         "apia", "darwin", "hobart", "suva", "wellington",
-        "aroha", "kiri", "maia", "moana", "tane",
+        "kiri", "maia", "moana", "tane", "wiremu",
     ),
 }
 
@@ -82,6 +97,18 @@ PALETTE_COMPANIONS = tuple(
     for group in PALETTE_COMPANION_GROUPS.values()
     for token in group
 )
+
+PALETTE_NAME_GENDERS = {
+    # Ambiguous or widely cross-gender names use "neutral" and therefore only
+    # combine with invariant adjective forms.
+    "amara": "f", "chidi": "m", "kwame": "m", "nia": "f", "zuri": "neutral",
+    "alba": "f", "ines": "f", "mateo": "m", "noa": "neutral", "tiago": "m",
+    "aiko": "f", "haruto": "m", "kenji": "m", "mei": "f", "ren": "neutral",
+    "anaya": "f", "arjun": "m", "kiran": "neutral", "priya": "f", "ravi": "m",
+    "amir": "m", "deniz": "neutral", "laila": "f", "omar": "m", "sana": "f",
+    "alex": "neutral", "freja": "f", "luka": "m", "sofia": "f", "teo": "m",
+    "kiri": "neutral", "maia": "f", "moana": "f", "tane": "m", "wiremu": "m",
+}
 
 
 README_PRESETS: dict[str, dict[str, object]] = {
@@ -247,6 +274,22 @@ def slider_position_to_h_orbits(position: int | float) -> float:
     return position / 10.0
 
 
+def palette_adjective(family: str, companion: str, digest: bytes) -> str:
+    """Choose an adjective that agrees with a name and balances place names."""
+    choices = PALETTE_ADJECTIVES[family]
+    gender = PALETTE_NAME_GENDERS.get(companion, "place")
+    if gender == "neutral":
+        invariant = tuple(pair for pair in choices if pair[0] == pair[1])
+        return invariant[int.from_bytes(digest[:2], "big") % len(invariant)][0]
+
+    masculine, feminine = choices[int.from_bytes(digest[:2], "big") % len(choices)]
+    if gender == "f":
+        return feminine
+    if gender == "m":
+        return masculine
+    return (masculine, feminine)[int.from_bytes(digest[4:6], "big") % 2]
+
+
 def generate_palette_name(rows: list[tuple[str, float, float, float]]) -> str:
     """Return a deterministic, feature-aware Romance-style palette slug."""
     if not rows:
@@ -278,9 +321,8 @@ def generate_palette_name(rows: list[tuple[str, float, float, float]]) -> str:
         for color, lightness, chroma, hue in rows
     ).encode("ascii")
     digest = hashlib.sha256(fingerprint).digest()
-    adjectives = PALETTE_ADJECTIVES[family]
-    adjective = adjectives[int.from_bytes(digest[:2], "big") % len(adjectives)]
     companion = PALETTE_COMPANIONS[int.from_bytes(digest[2:4], "big") % len(PALETTE_COMPANIONS)]
+    adjective = palette_adjective(family, companion, digest)
     return f"{adjective}_{companion}"
 
 
