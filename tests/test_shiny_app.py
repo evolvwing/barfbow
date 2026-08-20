@@ -17,6 +17,7 @@ from app import (
     generate_palette_name,
     h_orbits_to_slider_position,
     hue_slider_css,
+    luminance_cycle_max,
     make_palette_state,
     n_to_slider_position,
     palette_adjective,
@@ -394,14 +395,21 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIs(values["divergent"], True)
         self.assertEqual(values["palette_name"], "radiante_lisboa")
 
-        capped = parse_shared_parameters("?n=18&c_mode=k&c_interval=200")
+        capped = parse_shared_parameters("?n=18&l_cycles=12&c_mode=k&c_interval=200")
         self.assertEqual(capped["c_interval"], 18)
+        self.assertEqual(capped["l_cycles"], 9)
+        self.assertEqual(luminance_cycle_max(2), 1)
+        self.assertEqual(luminance_cycle_max(23), 11.5)
+        self.assertEqual(luminance_cycle_max(24), 12)
+        self.assertEqual(luminance_cycle_max(25), 12)
 
         server_source = inspect.getsource(server)
-        self.assertIn("def update_c_interval_limit", server_source)
+        self.assertIn("def update_count_dependent_limits", server_source)
         self.assertIn("max=color_count", server_source)
-        self.assertIn("value=min(current, color_count)", server_source)
-        self.assertIn('"color_count": slider_position_to_n(input.n())', server_source)
+        self.assertIn("value=min(current_interval, color_count)", server_source)
+        self.assertIn("max=cycle_maximum", server_source)
+        self.assertIn("value=min(current_cycles, cycle_maximum)", server_source)
+        self.assertIn('"color_count": color_count', server_source)
         self.assertIn('"c_interval": int(input.c_interval())', server_source)
 
     def test_delta_bounds_keep_generated_blocks_inside_chroma_range(self):

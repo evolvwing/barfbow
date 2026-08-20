@@ -245,6 +245,12 @@ README_PRESETS: dict[str, dict[str, object]] = {
 }
 
 
+def luminance_cycle_max(n: int | float) -> float:
+    """Return the N-aware upper bound for luminance cycles."""
+    color_count = max(2, min(1000, int(round(float(n)))))
+    return color_count / 2.0 if color_count < 25 else 12.0
+
+
 def parse_shared_parameters(search: str) -> dict[str, object]:
     """Parse and bound palette controls from a generated share-link query."""
     query = parse_qs(search.removeprefix("?"), keep_blank_values=False)
@@ -273,6 +279,11 @@ def parse_shared_parameters(search: str) -> dict[str, object]:
 
     if "n" in values and "c_interval" in values:
         values["c_interval"] = min(int(values["c_interval"]), int(values["n"]))
+    if "n" in values and "l_cycles" in values:
+        values["l_cycles"] = min(
+            float(values["l_cycles"]),
+            luminance_cycle_max(int(values["n"])),
+        )
 
     if query.get("delta_mode", [""])[0] in {"add", "halve"}:
         values["delta_mode"] = query["delta_mode"][0]
@@ -1375,12 +1386,15 @@ def server(input: Inputs, output: Outputs, session: Session):
     async def sync_browser_dependent_controls():
         if input.dependent_controls_ready() is None:
             return
+        color_count = slider_position_to_n(input.n())
         await session.send_custom_message(
             "barfbow-dependent-controls",
             {
                 "divergent": bool(input.divergent()),
-                "luminance_cycles": float(input.l_cycles()),
-                "color_count": slider_position_to_n(input.n()),
+                "luminance_cycles": min(
+                    float(input.l_cycles()), luminance_cycle_max(color_count)
+                ),
+                "color_count": color_count,
                 "c_interval": int(input.c_interval()),
             },
         )
@@ -1404,15 +1418,24 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.effect
     @reactive.event(input.n)
-    def update_c_interval_limit():
+    def update_count_dependent_limits():
         color_count = slider_position_to_n(input.n())
         with reactive.isolate():
-            current = max(1, int(input.c_interval()))
+            current_interval = max(1, int(input.c_interval()))
+            current_cycles = max(0.1, float(input.l_cycles()))
         ui.update_slider(
             "c_interval",
             min=1,
             max=color_count,
-            value=min(current, color_count),
+            value=min(current_interval, color_count),
+            session=session,
+        )
+        cycle_maximum = luminance_cycle_max(color_count)
+        ui.update_slider(
+            "l_cycles",
+            min=0.1,
+            max=cycle_maximum,
+            value=min(current_cycles, cycle_maximum),
             session=session,
         )
 
@@ -1447,10 +1470,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         c_mode = str(input.c_mode())
         if c_mode == "k":
             c_mode = str(max(1, int(input.c_interval())))
+        color_count = slider_position_to_n(input.n())
+        effective_cycles = min(float(input.l_cycles()), luminance_cycle_max(color_count))
         lower, upper = delta_c_bounds(
-            n=slider_position_to_n(input.n()),
+            n=color_count,
             h_orbits=slider_position_to_h_orbits(input.h_orbits()),
-            l_cycles=float(input.l_cycles()),
+            l_cycles=effective_cycles,
             c1=float(input.c1()),
             c_mode=c_mode,
             divergent=bool(input.divergent()),
@@ -1460,13 +1485,15 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.calc
     def palette_state() -> PaletteState:
+        color_count = slider_position_to_n(input.n())
+        effective_cycles = min(float(input.l_cycles()), luminance_cycle_max(color_count))
         c_mode = str(input.c_mode())
         if c_mode == "k":
             c_mode = str(max(1, int(input.c_interval())))
         delta_c = None if input.delta_mode() == "halve" else float(input.delta_c())
         return make_palette_state(
-            n=slider_position_to_n(input.n()), h_orbits=slider_position_to_h_orbits(input.h_orbits()), h1=float(input.h1()), h2=float(input.h2()),
-            l1=float(input.l1()), l2=float(input.l2()), l_cycles=float(input.l_cycles()),
+            n=color_count, h_orbits=slider_position_to_h_orbits(input.h_orbits()), h1=float(input.h1()), h2=float(input.h2()),
+            l1=float(input.l1()), l2=float(input.l2()), l_cycles=effective_cycles,
             c1=float(input.c1()), delta_c=delta_c, c_mode=c_mode, divergent=bool(input.divergent()),
         )
 
