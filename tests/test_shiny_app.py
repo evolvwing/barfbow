@@ -238,6 +238,7 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn('divergent.addEventListener("change", sync)', DEPENDENT_CONTROL_JS)
         self.assertIn('cMode.addEventListener("change", syncCMode)', DEPENDENT_CONTROL_JS)
         self.assertIn("slider.update({ disable: disabled })", DEPENDENT_CONTROL_JS)
+        self.assertIn("if (disabled !== wasDisabled) slider.update", DEPENDENT_CONTROL_JS)
         self.assertIn('setSliderDisabled("l-cycles-control", "l_cycles", divergent, 1)', DEPENDENT_CONTROL_JS)
         self.assertIn('setSliderDisabled("h2-control", "h2", !divergent)', DEPENDENT_CONTROL_JS)
         self.assertIn('divergent || chromaProgressionIsDisabled()', DEPENDENT_CONTROL_JS)

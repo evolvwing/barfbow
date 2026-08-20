@@ -855,8 +855,13 @@ DEPENDENT_CONTROL_JS = """
 
     wrapper.classList.toggle("parameter-disabled", disabled);
     wrapper.setAttribute("aria-disabled", String(disabled));
-    if (slider) slider.update({ disable: disabled });
-    else input.disabled = disabled;
+    // Updating IonRangeSlider during its own change event can swallow Shiny's
+    // input notification. Only touch the plugin when its state really changes.
+    if (slider) {
+      if (disabled !== wasDisabled) slider.update({ disable: disabled });
+    } else {
+      input.disabled = disabled;
+    }
   }
 
   function syncDependentControls(divergent) {
@@ -1406,6 +1411,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     shared_state_restored = reactive.value(False)
     previous_divergent = reactive.value(False)
     shared_divergent_transition_consumed = reactive.value(False)
+    previous_luminance_cycle_max = reactive.value(12.0)
 
     def update_control_values(values: dict[str, object]) -> None:
         """Apply a partial control mapping in dependency-safe order."""
@@ -1489,13 +1495,16 @@ def server(input: Inputs, output: Outputs, session: Session):
             session=session,
         )
         cycle_maximum = luminance_cycle_max(color_count)
-        ui.update_slider(
-            "l_cycles",
-            min=0.1,
-            max=cycle_maximum,
-            value=min(current_cycles, cycle_maximum),
-            session=session,
-        )
+        old_cycle_maximum = float(previous_luminance_cycle_max.get())
+        if cycle_maximum != old_cycle_maximum or current_cycles > cycle_maximum:
+            ui.update_slider(
+                "l_cycles",
+                min=0.1,
+                max=cycle_maximum,
+                value=min(current_cycles, cycle_maximum),
+                session=session,
+            )
+        previous_luminance_cycle_max.set(cycle_maximum)
 
     @reactive.effect
     @reactive.event(input.divergent)
