@@ -375,11 +375,18 @@ class ShinyPaletteStateTests(unittest.TestCase):
         )
         self.assertIn('radiante_lisboa <- c(', script)
         self.assertIn('barfbow_palette <- radiante_lisboa', script)
+        self.assertIn('source("radiante_lisboa.R")', script)
+        self.assertIn('barfbow_palette_name <- "radiante_lisboa"', script)
+        self.assertIn("barfbow_colors <- function(reverse = FALSE)", script)
         self.assertIn('"#112233"', script)
         self.assertIn('"#AABBCC"', script)
         self.assertIn('"#112233", "#AABBCC"', script)
         self.assertIn("ggplot2::scale_colour_manual", script)
+        self.assertIn("ggplot2::scale_colour_gradientn", script)
+        self.assertIn("scale_color_barfbow <- scale_colour_barfbow", script)
         self.assertIn("ggplot2::scale_fill_manual", script)
+        self.assertIn("ggplot2::scale_fill_gradientn", script)
+        self.assertIn("discrete = FALSE", script)
 
     def test_share_link_parameters_are_bounded_and_typed(self):
         values = parse_shared_parameters(
