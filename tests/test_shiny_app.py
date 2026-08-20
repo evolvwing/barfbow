@@ -1,8 +1,11 @@
 import inspect
+import re
 import unittest
 
 import barfbow
 from app import (
+    PALETTE_COMPANION_GROUPS,
+    PALETTE_COMPANIONS,
     APP_CSS,
     DEPENDENT_CONTROL_JS,
     README_PRESETS,
@@ -121,6 +124,12 @@ class ShinyPaletteStateTests(unittest.TestCase):
             generate_palette_name(rows),
             generate_palette_name(rows + [("#FFCC00", 80.0, 90.0, 100.0)]),
         )
+
+    def test_palette_companions_are_region_balanced_and_slug_safe(self):
+        self.assertEqual(len(PALETTE_COMPANION_GROUPS), 7)
+        self.assertEqual({len(tokens) for tokens in PALETTE_COMPANION_GROUPS.values()}, {10})
+        self.assertEqual(len(PALETTE_COMPANIONS), len(set(PALETTE_COMPANIONS)))
+        self.assertTrue(all(re.fullmatch(r"[a-z]+", token) for token in PALETTE_COMPANIONS))
 
     def test_low_cycle_preview_hides_chroma_details(self):
         state = make_palette_state(

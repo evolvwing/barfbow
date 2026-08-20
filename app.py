@@ -44,12 +44,43 @@ PALETTE_ADJECTIVES: dict[str, tuple[str, ...]] = {
     "balanced": ("armonico", "gentile", "quieto", "sottile", "tranquilo"),
 }
 
-PALETTE_COMPANIONS = (
-    "amalfi", "arles", "avignon", "coimbra", "cordoba", "firenze", "lisboa",
-    "lucca", "matera", "menton", "napoli", "nimes", "porto", "ravenna",
-    "sevilla", "siena", "toledo", "valencia", "verona", "vicenza",
-    "adela", "celeste", "elio", "ines", "leon", "lucia", "maia", "mateo",
-    "noemi", "renzo", "sofia", "teo",
+PALETTE_COMPANION_GROUPS: dict[str, tuple[str, ...]] = {
+    # Each region contributes the same number of ASCII-safe place and given-name
+    # tokens, so no region dominates the deterministic selection.
+    "africa": (
+        "accra", "aswan", "dakar", "kigali", "lagos",
+        "amara", "chidi", "imani", "nia", "zuri",
+    ),
+    "americas": (
+        "cusco", "havana", "lima", "oaxaca", "quito",
+        "alba", "ines", "luz", "maya", "noa",
+    ),
+    "east_asia": (
+        "busan", "kyoto", "osaka", "seoul", "taipei",
+        "aiko", "hana", "kenji", "mei", "yuna",
+    ),
+    "south_southeast_asia": (
+        "bali", "hanoi", "jaipur", "kathmandu", "kochi",
+        "anaya", "arjun", "kiran", "priya", "ravi",
+    ),
+    "west_central_asia": (
+        "amman", "baku", "beirut", "bukhara", "samarkand",
+        "amir", "laila", "omar", "sana", "tariq",
+    ),
+    "europe": (
+        "arles", "coimbra", "lisboa", "ravenna", "sevilla",
+        "freja", "luka", "sofia", "teo", "vesna",
+    ),
+    "oceania": (
+        "apia", "darwin", "hobart", "suva", "wellington",
+        "aroha", "kiri", "maia", "moana", "tane",
+    ),
+}
+
+PALETTE_COMPANIONS = tuple(
+    token
+    for group in PALETTE_COMPANION_GROUPS.values()
+    for token in group
 )
 
 
