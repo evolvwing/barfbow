@@ -196,6 +196,26 @@ def slider_position_to_n(position: int | float) -> int:
     return 100 + ((position - 100) * 10)
 
 
+def h_orbits_to_slider_position(value: int | float) -> int:
+    """Map hue orbits to a fine-centered, coarse-ended slider position."""
+    value = max(-8.0, min(8.0, float(value)))
+    if value < -3:
+        return int(round(-30 + ((value + 3) * 2)))
+    if value > 3:
+        return int(round(30 + ((value - 3) * 2)))
+    return int(round(value * 10))
+
+
+def slider_position_to_h_orbits(position: int | float) -> float:
+    """Map a hue-orbit slider position to its displayed orbit value."""
+    position = max(-40, min(40, int(round(float(position)))))
+    if position < -30:
+        return -3 + ((position + 30) * 0.5)
+    if position > 30:
+        return 3 + ((position - 30) * 0.5)
+    return position / 10.0
+
+
 def generate_palette_name(rows: list[tuple[str, float, float, float]]) -> str:
     """Return a deterministic, feature-aware Romance-style palette slug."""
     if not rows:
@@ -787,6 +807,38 @@ DEPENDENT_CONTROL_JS = """
     syncNumberLabels();
   }
 
+  function bindHueOrbitScale() {
+    const hueOrbits = document.getElementById("h_orbits");
+    if (!hueOrbits || hueOrbits.dataset.twoSpeedBound === "true") return;
+    const slider = window.jQuery ? window.jQuery(hueOrbits).data("ionRangeSlider") : null;
+    if (!slider) {
+      window.setTimeout(bindHueOrbitScale, 50);
+      return;
+    }
+    const sliderRoot = hueOrbits.closest(".form-group");
+    const actualOrbits = position => position < -30
+      ? -3 + ((position + 30) * 0.5)
+      : position > 30 ? 3 + ((position - 30) * 0.5) : position / 10;
+    const signed = value => value > 0 ? `+${value}` : String(value);
+    const syncHueOrbitLabels = () => {
+      const minimum = sliderRoot?.querySelector(".irs-min");
+      const maximum = sliderRoot?.querySelector(".irs-max");
+      const current = sliderRoot?.querySelector(".irs-single");
+      const currentText = signed(actualOrbits(Number(slider.result.from)));
+      if (minimum && minimum.textContent !== "-8") minimum.textContent = "-8";
+      if (maximum && maximum.textContent !== "+8") maximum.textContent = "+8";
+      if (current && current.textContent !== currentText) current.textContent = currentText;
+      sliderRoot?.querySelector(".irs-handle")?.setAttribute("aria-valuetext", currentText);
+    };
+    const labelObserver = new MutationObserver(syncHueOrbitLabels);
+    labelObserver.observe(sliderRoot, { childList: true, characterData: true, subtree: true });
+    if (window.jQuery) {
+      window.jQuery(hueOrbits).on("change.twoSpeedHue input.twoSpeedHue", syncHueOrbitLabels);
+    }
+    hueOrbits.dataset.twoSpeedBound = "true";
+    syncHueOrbitLabels();
+  }
+
   let lastCModeAvailability = null;
   function enforceCModeAvailability() {
     const divergent = Boolean(document.getElementById("divergent")?.checked);
@@ -806,6 +858,7 @@ DEPENDENT_CONTROL_JS = """
 
   function bindDependentControls() {
     bindNumberOfColorsScale();
+    bindHueOrbitScale();
     const divergent = document.getElementById("divergent");
     if (!divergent || divergent.dataset.dependentControlsBound === "true") return;
     const sync = () => {
@@ -868,7 +921,9 @@ DEPENDENT_CONTROL_JS = """
       syncChromaProgressionSection(Number(message.luminance_cycles));
     });
     window.barfbowDependentControlHandlerBound = true;
-    window.Shiny.setInputValue("dependent_controls_ready", Date.now(), { priority: "event" });
+    if (typeof window.Shiny.setInputValue === "function") {
+      window.Shiny.setInputValue("dependent_controls_ready", Date.now(), { priority: "event" });
+    }
     window.setTimeout(() => {
       const divergent = Boolean(document.getElementById("divergent")?.checked);
       const luminanceCycles = document.getElementById("l_cycles");
@@ -906,6 +961,12 @@ SHARE_LINK_JS = """
     const rawValue = Number(slider ? slider.result.from : input.value);
     if (id === "n") {
       return String(rawValue <= 100 ? rawValue : 100 + ((rawValue - 100) * 10));
+    }
+    if (id === "h_orbits") {
+      const actual = rawValue < -30
+        ? -3 + ((rawValue + 30) * 0.5)
+        : rawValue > 30 ? 3 + ((rawValue - 30) * 0.5) : rawValue / 10;
+      return String(actual);
     }
     return String(slider ? slider.result.from : input.value);
   }
@@ -973,7 +1034,7 @@ app_ui = ui.page_fluid(
             ui.h1("barfbow", class_="brand"),
             ui.p("Live OKLCh palette laboratory", class_="tagline"),
             ui.p(
-                "Hike up and down the color domes to generate perceptually uniform color palettes. "
+                "Hike up and down the color domes to generate color palettes. "
                 "Check colorblind simulations to improve accessibility.",
                 class_="intro-copy",
             ),
@@ -991,7 +1052,7 @@ app_ui = ui.page_fluid(
             ui.input_slider(
                 "h_orbits",
                 control_label("Hue orbits", "How many full turns the palette makes around the color wheel."),
-                -8, 8, 2.5, step=0.1,
+                -40, 40, 25, step=1,
             ),
                 id="h-orbits-control",
                 class_="parameter-control",
@@ -1160,7 +1221,13 @@ def server(input: Inputs, output: Outputs, session: Session):
             ui.update_switch("divergent", value=bool(values["divergent"]), session=session)
         if "n" in values:
             ui.update_slider("n", value=n_to_slider_position(float(values["n"])), session=session)
-        for name in ("h_orbits", "h1", "h2", "l1", "l2", "c1"):
+        if "h_orbits" in values:
+            ui.update_slider(
+                "h_orbits",
+                value=h_orbits_to_slider_position(float(values["h_orbits"])),
+                session=session,
+            )
+        for name in ("h1", "h2", "l1", "l2", "c1"):
             if name in values:
                 ui.update_slider(name, value=float(values[name]), session=session)
         if "delta_mode" in values:
@@ -1259,7 +1326,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             c_mode = str(max(1, int(input.c_interval())))
         lower, upper = delta_c_bounds(
             n=slider_position_to_n(input.n()),
-            h_orbits=float(input.h_orbits()),
+            h_orbits=slider_position_to_h_orbits(input.h_orbits()),
             l_cycles=float(input.l_cycles()),
             c1=float(input.c1()),
             c_mode=c_mode,
@@ -1275,7 +1342,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             c_mode = str(max(1, int(input.c_interval())))
         delta_c = None if input.delta_mode() == "halve" else float(input.delta_c())
         return make_palette_state(
-            n=slider_position_to_n(input.n()), h_orbits=float(input.h_orbits()), h1=float(input.h1()), h2=float(input.h2()),
+            n=slider_position_to_n(input.n()), h_orbits=slider_position_to_h_orbits(input.h_orbits()), h1=float(input.h1()), h2=float(input.h2()),
             l1=float(input.l1()), l2=float(input.l2()), l_cycles=float(input.l_cycles()),
             c1=float(input.c1()), delta_c=delta_c, c_mode=c_mode, divergent=bool(input.divergent()),
         )

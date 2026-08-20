@@ -10,6 +10,7 @@ from app import (
     app_ui,
     delta_c_bounds,
     generate_palette_name,
+    h_orbits_to_slider_position,
     hue_slider_css,
     make_palette_state,
     n_to_slider_position,
@@ -18,6 +19,7 @@ from app import (
     preview_html,
     r_palette_script,
     server,
+    slider_position_to_h_orbits,
     slider_position_to_n,
 )
 
@@ -237,7 +239,7 @@ class ShinyPaletteStateTests(unittest.TestCase):
     def test_readme_presets_match_documented_examples(self):
         markup = str(app_ui)
         self.assertIn(
-            "Hike up and down the color domes to generate perceptually uniform color palettes. "
+            "Hike up and down the color domes to generate color palettes. "
             "Check colorblind simulations to improve accessibility.",
             markup,
         )
@@ -303,6 +305,15 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn('maximum.textContent !== "1,000"', DEPENDENT_CONTROL_JS)
         self.assertIn("new MutationObserver(syncNumberLabels)", DEPENDENT_CONTROL_JS)
         self.assertIn('if (id === "n")', SHARE_LINK_JS)
+
+    def test_hue_orbit_slider_uses_two_speed_signed_scale(self):
+        for value, position in ((-8, -40), (-3, -30), (-1.5, -15), (0, 0), (2.5, 25), (3, 30), (8, 40)):
+            self.assertEqual(h_orbits_to_slider_position(value), position)
+            self.assertEqual(slider_position_to_h_orbits(position), value)
+        self.assertIn("hueOrbits.dataset.twoSpeedBound", DEPENDENT_CONTROL_JS)
+        self.assertIn('maximum.textContent !== "+8"', DEPENDENT_CONTROL_JS)
+        self.assertIn('value > 0 ? `+${value}`', DEPENDENT_CONTROL_JS)
+        self.assertIn('if (id === "h_orbits")', SHARE_LINK_JS)
 
     def test_r_download_and_share_link_controls(self):
         markup = str(app_ui)
