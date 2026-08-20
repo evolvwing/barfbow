@@ -152,7 +152,7 @@ def parse_shared_parameters(search: str) -> dict[str, object]:
         "l2": (0, 100, False),
         "c1": (0, 100, False),
         "delta_c": (-100, 100, False),
-        "c_interval": (1, 200, True),
+        "c_interval": (1, 1000, True),
     }
     for name, (lower, upper, integer) in numeric_specs.items():
         if name not in query:
@@ -162,6 +162,9 @@ def parse_shared_parameters(search: str) -> dict[str, object]:
         except ValueError:
             continue
         values[name] = int(value) if integer else value
+
+    if "n" in values and "c_interval" in values:
+        values["c_interval"] = min(int(values["c_interval"]), int(values["n"]))
 
     if query.get("delta_mode", [""])[0] in {"add", "halve"}:
         values["delta_mode"] = query["delta_mode"][0]
@@ -685,6 +688,22 @@ DEPENDENT_CONTROL_JS = """
     );
   }
 
+  function syncChromaIntervalLimit(colorCount, requestedValue = null) {
+    const input = document.getElementById("c_interval");
+    if (!input) return;
+    const slider = window.jQuery ? window.jQuery(input).data("ionRangeSlider") : null;
+    const maximum = Math.max(1, Math.floor(Number(colorCount)));
+    const previous = slider ? Number(slider.result.from) : Number(input.value);
+    const requested = requestedValue === null ? previous : Number(requestedValue);
+    const nextValue = Math.max(1, Math.min(maximum, Math.floor(requested)));
+    if (slider) slider.update({ min: 1, max: maximum, from: nextValue });
+    else input.max = String(maximum);
+    if (previous !== nextValue) {
+      input.value = String(nextValue);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
   function syncDeltaControl(deltaMode) {
     const wrapper = document.getElementById("delta-c-control");
     const input = document.getElementById("delta_c");
@@ -844,6 +863,7 @@ DEPENDENT_CONTROL_JS = """
     window.Shiny.addCustomMessageHandler("barfbow-dependent-controls", message => {
       const divergent = document.getElementById("divergent");
       if (divergent) divergent.checked = Boolean(message.divergent);
+      syncChromaIntervalLimit(Number(message.color_count), Number(message.c_interval));
       syncDependentControls(Boolean(message.divergent));
       syncChromaProgressionSection(Number(message.luminance_cycles));
     });
@@ -1065,7 +1085,7 @@ app_ui = ui.page_fluid(
                         class_="parameter-control",
                     ),
                     ui.div(
-                        ui.input_slider("c_interval", "k colors per block", 1, 200, 12, step=1),
+                        ui.input_slider("c_interval", "k colors per block", 1, 100, 12, step=1),
                         id="c-interval-control",
                         class_="parameter-control",
                     ),
@@ -1170,6 +1190,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             {
                 "divergent": bool(input.divergent()),
                 "luminance_cycles": float(input.l_cycles()),
+                "color_count": slider_position_to_n(input.n()),
+                "c_interval": int(input.c_interval()),
             },
         )
 
@@ -1189,6 +1211,20 @@ def server(input: Inputs, output: Outputs, session: Session):
     def remember_delta_c():
         if input.delta_mode() == "add":
             saved_delta_c.set(float(input.delta_c()))
+
+    @reactive.effect
+    @reactive.event(input.n)
+    def update_c_interval_limit():
+        color_count = slider_position_to_n(input.n())
+        with reactive.isolate():
+            current = max(1, int(input.c_interval()))
+        ui.update_slider(
+            "c_interval",
+            min=1,
+            max=color_count,
+            value=min(current, color_count),
+            session=session,
+        )
 
     @reactive.effect
     @reactive.event(input.divergent)
