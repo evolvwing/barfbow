@@ -31,6 +31,26 @@ python -m pip install -e .
 
 After that, run either `python barfbow.py ...` from the repository or the installed `barfbow ...` command.
 
+## Interactive Shiny app
+
+Launch the local app, then open the displayed address in Chrome:
+
+```bash
+python3 -m shiny run --reload app.py
+```
+
+The app provides live controls for every palette parameter, browser-native
+swatches and OKLCh walk wheels, color-vision simulations, nearby color names,
+the full palette table, CSV/PNG downloads, a sourceable R palette with ggplot2
+scale helpers, and shareable parameter links. Each palette gets a deterministic,
+Romance-inspired name used in the preview, shared URL, PNG, R object, and download
+filenames. Numeric CLI parameters are
+sliders; `C-mode`, halving, and divergent behavior use compact mode controls.
+The preset menu loads the default, categorical, sequential, and divergent
+examples documented below, with the sequential example adapted to the app's
+1,000-color limit; every value remains editable afterward.
+The downloaded PNG is rendered by the same Matplotlib code as the CLI.
+
 ## Quick Start
 
 Run with the default command:

@@ -11,7 +11,7 @@ Update vs v2-7
   next block after each full lightness cycle.
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 import argparse
 import csv
 import sys
@@ -404,7 +404,8 @@ def draw_oklch_walk_maps(ax, plt, rows: List[Tuple[str, float, float, float]],
 
 def show_swatch_grid(rows: List[Tuple[str, float, float, float]], chroma_ranges: List[Tuple[str, float, int, int]],
                      title: str, L_cycles: float, reverse_dot_fade: bool = False, save_png: bool = False,
-                     png_path: str = "palette_grid.png", show: bool = True, block: bool = False) -> None:
+                     png_path: str = "palette_grid.png", show: bool = True, block: bool = False,
+                     palette_name: Optional[str] = None) -> None:
     try:
         import matplotlib.pyplot as plt
     except ModuleNotFoundError as error:
@@ -439,8 +440,16 @@ def show_swatch_grid(rows: List[Tuple[str, float, float, float]], chroma_ranges:
     draw_oklch_walk_maps(wheel_ax, plt, rows, chroma_ranges, L_cycles, reverse_dot_fade)
     title_lines = title.splitlines()
     title_y = [0.975, 0.948, 0.921]
-    fig.text(0.18, title_y[0], "barfbow", ha="center", va="top", fontsize=28, weight="bold", fontfamily="Oswald")
-    fig.text(0.18, title_y[2], "GitHub: evolvwing/barfbow", ha="center", va="top", fontsize=12)
+    if palette_name:
+        fig.text(0.18, 0.985, "barfbow", ha="center", va="top", fontsize=28,
+                 weight="bold", fontfamily="Oswald")
+        fig.text(0.18, 0.928, palette_name, ha="center", va="top", fontsize=11,
+                 weight="bold", fontfamily="DejaVu Sans Mono")
+        fig.text(0.18, 0.895, "GitHub: evolvwing/barfbow", ha="center", va="top", fontsize=10)
+    else:
+        fig.text(0.18, title_y[0], "barfbow", ha="center", va="top", fontsize=28,
+                 weight="bold", fontfamily="Oswald")
+        fig.text(0.18, title_y[2], "GitHub: evolvwing/barfbow", ha="center", va="top", fontsize=12)
     for line, y in zip(title_lines, title_y):
         fig.text(0.68, y, line, ha="center", va="top", fontsize=12)
     if save_png:

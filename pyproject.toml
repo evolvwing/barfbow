@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "matplotlib>=3.7",
+    "shiny>=1.7",
 ]
 
 [project.scripts]
