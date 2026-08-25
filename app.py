@@ -597,12 +597,31 @@ def preview_number_labels(color_count: int) -> list[int]:
     return [index for index in range(color_count) if (index + 1) % step == 0]
 
 
-def _wheel_gradient(chroma: float) -> str:
+WHEEL_RADIAL_STEPS = 36
+
+
+def _wheel_gradient(chroma: float, lightness: float) -> str:
+    """Return a hue ring at one true OKLCh lightness and chroma."""
     stops = []
     for hue in range(0, 361, 10):
-        color = barfbow.oklch_to_srgb_hex(62.5, chroma, hue)
+        color = barfbow.oklch_to_srgb_hex(lightness, chroma, hue)
         stops.append(f"{color} {hue}deg")
     return ",".join(stops)
+
+
+def _wheel_surface_html(chroma: float) -> str:
+    """Render the wheel as nested, gamut-fitted OKLCh lightness layers."""
+    rings = []
+    for radial_index in reversed(range(WHEEL_RADIAL_STEPS)):
+        outer_fraction = (radial_index + 1) / WHEEL_RADIAL_STEPS
+        lightness_fraction = radial_index / (WHEEL_RADIAL_STEPS - 1)
+        lightness = 100.0 - lightness_fraction * (100.0 - barfbow.WHEEL_MIN_LIGHTNESS)
+        inset = (1.0 - outer_fraction) * 50.0
+        rings.append(
+            '<span class="wheel-ring" '
+            f'style="inset:{inset:.4f}%;--wheel:{_wheel_gradient(chroma, lightness)}"></span>'
+        )
+    return f'<div class="wheel-surface" aria-hidden="true">{"".join(rings)}</div>'
 
 
 def _wheel_html(
@@ -638,7 +657,8 @@ def _wheel_html(
     return f"""
       <div class="wheel-card">
         <div class="wheel-label"><strong>{label_1}</strong><span>{label_2}</span></div>
-        <div class="wheel-disc" style="--wheel:{_wheel_gradient(chroma)}">
+        <div class="wheel-disc">
+          {_wheel_surface_html(chroma)}
           <svg viewBox="0 0 220 220" aria-label="{label_1}, {label_2}">{''.join(dots)}</svg>
         </div>
       </div>
@@ -813,7 +833,10 @@ body { margin:0; color:var(--ink); background:var(--paper); font-family:Inter,ui
 .wheels.single-wheel .wheel-card:first-child::after { display:none; }
 .wheel-label { height:39px; font-size:10px; display:flex; flex-direction:column; justify-content:end; }
 .wheel-label span { color:var(--muted); }
-.wheel-disc { width:min(100%,210px); aspect-ratio:1; margin:auto; border-radius:50%; position:relative; background:radial-gradient(circle,rgba(255,255,255,.98) 0%,rgba(255,255,255,.34) 38%,rgba(0,0,0,.52) 100%),conic-gradient(from 0deg,var(--wheel)); box-shadow:inset 0 0 0 1px #222; }
+.wheel-disc { width:min(100%,210px); aspect-ratio:1; margin:auto; border-radius:50%; position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px #222; }
+.wheel-surface,.wheel-ring { position:absolute; border-radius:50%; }
+.wheel-surface { inset:0; }
+.wheel-ring { background:conic-gradient(from 0deg,var(--wheel)); }
 .wheel-disc svg { position:absolute; inset:0; width:100%; height:100%; }
 .hidden-note { text-align:right; font-size:11px; color:var(--muted); }
 .data-details { border-top:1px solid #e2ded5; margin-top:17px; padding-top:12px; font-size:12px; }

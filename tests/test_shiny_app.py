@@ -30,6 +30,7 @@ from app import (
     server,
     slider_position_to_h_orbits,
     slider_position_to_n,
+    _wheel_html,
 )
 
 
@@ -457,6 +458,20 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn('.wheel-card:first-child { position:relative; }', markup)
         self.assertIn('.wheel-card:first-child::after', markup)
         self.assertNotIn('border-right:1px solid #d2ccc1; padding-right', markup)
+
+    def test_wheel_surface_uses_true_oklch_luminance_layers(self):
+        rows = [("#000000", 25.0, 80.0, 0.0)]
+        markup = _wheel_html(rows, "c1", 80.0, 0, 0)
+        edge_red = barfbow.oklch_to_srgb_hex(25.0, 80.0, 0)
+        center_red = barfbow.oklch_to_srgb_hex(100.0, 80.0, 0)
+        fixed_mid_red = barfbow.oklch_to_srgb_hex(62.5, 80.0, 0)
+
+        self.assertEqual(markup.count('class="wheel-ring"'), 36)
+        self.assertIn(f"{edge_red} 0deg", markup)
+        self.assertIn(f"{center_red} 0deg", markup)
+        self.assertNotIn(f"{fixed_mid_red} 0deg</", markup)
+        self.assertIn('class="wheel-surface"', markup)
+        self.assertNotIn("radial-gradient(circle,rgba", str(app_ui))
 
 
 if __name__ == "__main__":
