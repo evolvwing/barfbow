@@ -9,48 +9,11 @@ palettes in real time. It includes color-vision simulations, monochrome renderin
 named swatches, OKLCh walk wheels, presets, deterministic palette names, shareable
 links, and CSV, PNG, and R downloads.
 
+**Use the live app:** [https://evolvwing.github.io/barfbow/](https://evolvwing.github.io/barfbow/)
+
 Choose the number of colors (`N`), then set how many times the palette should orbit the Hue wheel (`H-orbits`; positive values move clockwise). Colors cycle between two luminance levels (`L1` and `L2`) to add step-to-step contrast. Chroma can also shift in blocks, letting the palette move from vivid to muted colors, or the reverse.
 
 ![barfbow palette preview](docs/barfbow_preview.png)
-
-## Run the Shiny app
-
-Clone the repository, create a virtual environment, and install the dependencies:
-
-```bash
-git clone https://github.com/evolvwing/barfbow.git
-cd barfbow
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Launch the app, then open the displayed address in Chrome:
-
-```bash
-python3 -m shiny run --reload app.py
-```
-
-### Run entirely in the browser with ShinyLive
-
-Barfbow can also be exported as a static ShinyLive site. Python, Shiny, and the
-palette calculations then run in each visitor's browser, so the deployed site
-does not need a Python server.
-
-Install the exporter and build the site:
-
-```bash
-python -m pip install shinylive==0.8.12
-python scripts/export_shinylive.py _site
-python -m http.server --directory _site 8008
-```
-
-Open `http://localhost:8008/`. The export script deliberately stages only the
-canonical application files and required assets; it never bundles root-level
-palette experiments or generated files. The GitHub Pages workflow in
-`.github/workflows/deploy-shinylive.yml` performs the same export on pushes to
-`main` and can also be started manually.
 
 The app provides live controls for every palette parameter, browser-native
 swatches and OKLCh walk wheels, color-vision simulations, nearby color names,
