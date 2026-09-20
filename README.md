@@ -13,12 +13,11 @@ links, and CSV, PNG, and R downloads.
 
 ## How to cite
 
-Arnaud Martin. (2026). *Barfbow, an interactive Shiny palette laboratory for
-designing OKLCh color palettes* (Version 1.0.1) [Computer software]. Zenodo.
-[https://doi.org/10.5281/zenodo.22853591](https://doi.org/10.5281/zenodo.22853591).
-Project source: [https://github.com/evolvwing/barfbow](https://github.com/evolvwing/barfbow).
+Martin, A. (2026). Barfbow, an interactive Shiny palette laboratory for designing OKLCh color palettes (Version v1.0.1) [Computer software]. Zenodo. [https://doi.org/10.5281/zenodo.22853591](https://doi.org/10.5281/zenodo.22853591)
 
-All versions: [https://doi.org/10.5281/zenodo.22853590](https://doi.org/10.5281/zenodo.22853590).
+---
+
+## User guide
 
 Choose the number of colors (`N`), then set how many times the palette should orbit the Hue wheel (`H-orbits`; positive values move clockwise). Colors cycle between two luminance levels (`L1` and `L2`) to add step-to-step contrast. Chroma can also shift in blocks, letting the palette move from vivid to muted colors, or the reverse.
 
