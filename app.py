@@ -728,7 +728,7 @@ def preview_html(state: PaletteState, color_names: dict[int, str]) -> str:
       <header class="preview-header">
         <div class="preview-brand">
           <img src="barfbow_logo2.png" alt="Barfbow frog wizard logo">
-          <p>evolvwing/barfbow</p>
+          <p>evolvwing.github.io/barfbow/</p>
         </div>
         <div class="preview-title">{title_lines}</div>
       </header>
