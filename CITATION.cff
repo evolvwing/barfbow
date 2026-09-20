@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use barfbow, please cite it using the metadata below."
-title: "barfbow"
+title: "Barfbow, an interactive Shiny palette laboratory for designing OKLCh color palettes"
 type: software
 authors:
   - family-names: "Martin"
