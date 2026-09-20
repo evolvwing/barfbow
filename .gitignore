@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 *.egg-info/
 .pytest_cache/
+_site/
 palette_*.csv
 palette_*.png
 barfbow_v*.png
