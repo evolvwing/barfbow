@@ -11,6 +11,10 @@ links, and CSV, PNG, and R downloads.
 
 **Use the live app:** [https://evolvwing.github.io/barfbow/](https://evolvwing.github.io/barfbow/)
 
+## How to cite
+
+Arnaud Martin. (2026). *barfbow*. [https://github.com/evolvwing/barfbow](https://github.com/evolvwing/barfbow)
+
 Choose the number of colors (`N`), then set how many times the palette should orbit the Hue wheel (`H-orbits`; positive values move clockwise). Colors cycle between two luminance levels (`L1` and `L2`) to add step-to-step contrast. Chroma can also shift in blocks, letting the palette move from vivid to muted colors, or the reverse.
 
 ![barfbow palette preview](docs/barfbow_preview.png)
