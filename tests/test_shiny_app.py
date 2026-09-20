@@ -309,7 +309,7 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn('href="https://www.dnacrobatics.com"', markup)
         self.assertIn('href="https://github.com/evolvwing"', markup)
         self.assertIn("Designed by ", markup)
-        self.assertIn("Latest app version: August 20, 2026", markup)
+        self.assertIn("Latest app version: September 20, 2026", markup)
         self.assertIn('class="app-footer"', markup)
         self.assertLess(markup.index('class="sidebar-logo"'), markup.index('class="app-footer"'))
         self.assertIn('id="preset"', markup)
@@ -382,6 +382,19 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertIn("navigator.clipboard.writeText", SHARE_LINK_JS)
         self.assertIn("Copied to clipboard", SHARE_LINK_JS)
         self.assertIn('query.set("palette_name", paletteName)', SHARE_LINK_JS)
+        self.assertIn("function stableAppLocation()", SHARE_LINK_JS)
+        self.assertIn("window.top.location", SHARE_LINK_JS)
+        self.assertIn("new URL(document.referrer)", SHARE_LINK_JS)
+        self.assertIn("referrer.origin === window.location.origin", SHARE_LINK_JS)
+        self.assertIn("function stableAppPath(pathname)", SHARE_LINK_JS)
+        self.assertIn('/\\/app_[a-z0-9]+\\/?$/i', SHARE_LINK_JS)
+        self.assertIn('/\\/edit\\/?$/i', SHARE_LINK_JS)
+        self.assertIn("new URL(stableAppPath(appLocation.pathname), appLocation.origin)", SHARE_LINK_JS)
+        self.assertIn("await copyText(url.toString())", SHARE_LINK_JS)
+        self.assertIn("function syncShareLocation()", SHARE_LINK_JS)
+        self.assertIn('"share_url_search"', SHARE_LINK_JS)
+        self.assertIn("appLocation.search || window.location.search", SHARE_LINK_JS)
+        self.assertIn("syncShareLocation();", SHARE_LINK_JS)
 
         script = r_palette_script(
             [("#112233", 20.0, 30.0, 40.0), ("#AABBCC", 50.0, 60.0, 70.0)],
@@ -431,6 +444,8 @@ class ShinyPaletteStateTests(unittest.TestCase):
         self.assertEqual(luminance_cycle_max(25), 12)
 
         server_source = inspect.getsource(server)
+        self.assertIn("search = input.share_url_search()", server_source)
+        self.assertIn("parse_shared_parameters(str(search))", server_source)
         self.assertIn("def update_count_dependent_limits", server_source)
         self.assertIn("max=color_count", server_source)
         self.assertIn("value=min(current_interval, color_count)", server_source)

@@ -19,7 +19,7 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 import barfbow
 
 
-APP_VERSION_DATE = "August 20, 2026"
+APP_VERSION_DATE = "September 20, 2026"
 
 
 @dataclass(frozen=True)
@@ -1166,7 +1166,7 @@ DEPENDENT_CONTROL_JS = """
 """
 
 
-SHARE_LINK_JS = """
+SHARE_LINK_JS = r"""
 (() => {
   const parameterIds = [
     "n", "h_orbits", "h1", "h2", "l_cycles", "l1", "l2", "c1",
@@ -1206,6 +1206,53 @@ SHARE_LINK_JS = """
     fallback.remove();
   }
 
+  function stableAppLocation() {
+    try {
+      if (
+        window.top?.location?.origin === window.location.origin &&
+        !/\/app_[a-z0-9]+\/?$/i.test(window.top.location.pathname)
+      ) {
+        return window.top.location;
+      }
+    } catch (error) {
+      // Cross-origin embedding prevents access to the top-level location.
+    }
+    try {
+      const referrer = new URL(document.referrer);
+      if (
+        referrer.origin === window.location.origin &&
+        !/\/app_[a-z0-9]+\/?$/i.test(referrer.pathname)
+      ) {
+        return referrer;
+      }
+    } catch (error) {
+      // A missing or non-URL referrer is safe to ignore.
+    }
+    return window.location;
+  }
+
+  function stableAppPath(pathname) {
+    // ShinyLive runs the app in a disposable /app_<session>/ iframe. Direct
+    // links to that path stop working when the session is recreated, so share
+    // the containing static site instead. The edit view is also not a durable
+    // public viewer URL.
+    const withoutSession = pathname.replace(/\/app_[a-z0-9]+\/?$/i, "/");
+    return withoutSession.replace(/\/edit\/?$/i, "/");
+  }
+
+  function syncShareLocation() {
+    if (!window.Shiny?.setInputValue) {
+      window.setTimeout(syncShareLocation, 50);
+      return;
+    }
+    const appLocation = stableAppLocation();
+    window.Shiny.setInputValue(
+      "share_url_search",
+      appLocation.search || window.location.search,
+      { priority: "event" }
+    );
+  }
+
   function bindShareButton() {
     const button = document.getElementById("generate_link");
     const note = document.getElementById("copy-note");
@@ -1219,9 +1266,11 @@ SHARE_LINK_JS = """
       }
       const paletteName = document.getElementById("palette-name-value")?.dataset.paletteName;
       if (paletteName) query.set("palette_name", paletteName);
-      const url = `${window.location.origin}${window.location.pathname}?${query.toString()}`;
+      const appLocation = stableAppLocation();
+      const url = new URL(stableAppPath(appLocation.pathname), appLocation.origin);
+      url.search = query.toString();
       try {
-        await copyText(url);
+        await copyText(url.toString());
         if (note) {
           note.textContent = "Copied to clipboard";
           note.classList.add("visible");
@@ -1241,6 +1290,7 @@ SHARE_LINK_JS = """
   } else {
     bindShareButton();
   }
+  syncShareLocation();
 })();
 """
 
@@ -1463,9 +1513,11 @@ def server(input: Inputs, output: Outputs, session: Session):
     def restore_shared_state():
         if shared_state_restored.get():
             return
-        search = session.clientdata.url_search()
+        search = input.share_url_search()
+        if search is None:
+            return
         shared_state_restored.set(True)
-        values = parse_shared_parameters(search)
+        values = parse_shared_parameters(str(search))
         if values:
             update_control_values(values)
 
@@ -1540,7 +1592,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Preserve a deltaC explicitly encoded in an initially divergent share
         # link. Later off→on switches use the divergent-mode default of zero.
-        shared_values = parse_shared_parameters(session.clientdata.url_search())
+        shared_values = parse_shared_parameters(str(input.share_url_search() or ""))
         if (
             not shared_divergent_transition_consumed.get()
             and shared_values.get("divergent") is True
