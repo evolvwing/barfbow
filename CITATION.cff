@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Martin"
     given-names: "Arnaud"
-version: 1.0.0
+version: 1.0.1
 date-released: 2026-09-20
 url: "https://github.com/evolvwing/barfbow"
 repository-code: "https://github.com/evolvwing/barfbow"
