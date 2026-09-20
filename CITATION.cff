@@ -6,6 +6,7 @@ authors:
   - family-names: "Martin"
     given-names: "Arnaud"
 version: 1.0.1
+doi: 10.5281/zenodo.22853591
 date-released: 2026-09-20
 url: "https://github.com/evolvwing/barfbow"
 repository-code: "https://github.com/evolvwing/barfbow"
