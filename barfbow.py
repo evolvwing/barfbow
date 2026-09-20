@@ -445,11 +445,11 @@ def show_swatch_grid(rows: List[Tuple[str, float, float, float]], chroma_ranges:
                  weight="bold", fontfamily="Oswald")
         fig.text(0.18, 0.928, palette_name, ha="center", va="top", fontsize=11,
                  weight="bold", fontfamily="DejaVu Sans Mono")
-        fig.text(0.18, 0.895, "GitHub: evolvwing/barfbow", ha="center", va="top", fontsize=10)
+        fig.text(0.18, 0.895, "evolvwing.github.io/barfbow/", ha="center", va="top", fontsize=10)
     else:
         fig.text(0.18, title_y[0], "barfbow", ha="center", va="top", fontsize=28,
                  weight="bold", fontfamily="Oswald")
-        fig.text(0.18, title_y[2], "GitHub: evolvwing/barfbow", ha="center", va="top", fontsize=12)
+        fig.text(0.18, 0.895, "evolvwing.github.io/barfbow/", ha="center", va="top", fontsize=10)
     for line, y in zip(title_lines, title_y):
         fig.text(0.68, y, line, ha="center", va="top", fontsize=12)
     if save_png:
