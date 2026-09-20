@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use barfbow, please cite it using the metadata below."
+title: "barfbow"
+type: software
+authors:
+  - family-names: "Martin"
+    given-names: "Arnaud"
+version: 1.0.0
+date-released: 2026-09-20
+url: "https://github.com/evolvwing/barfbow"
+repository-code: "https://github.com/evolvwing/barfbow"
+license: MIT
