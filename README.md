@@ -4,7 +4,7 @@
   <img src="docs/barfbow_logo1.png" alt="barfbow unicorn logo" width="420">
 </p>
 
-`barfbow` is an interactive Shiny palette laboratory for designing OKLCh color
+`barfbow` is an interactive Shiny app for designing OKLCh color
 palettes in real time. It includes color-vision simulations, monochrome rendering,
 named swatches, OKLCh walk wheels, presets, deterministic palette names, shareable
 links, and CSV, PNG, and R downloads.
