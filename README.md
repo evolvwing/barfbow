@@ -13,7 +13,7 @@ links, and CSV, PNG, and R downloads.
 
 ## How to cite
 
-Martin, A. (2026). Barfbow, an interactive Shiny palette laboratory for designing OKLCh color palettes (Version v1.0.1) [Computer software]. Zenodo. [https://doi.org/10.5281/zenodo.22853591](https://doi.org/10.5281/zenodo.22853591)
+Martin, A. (2026). Barfbow, an interactive Shiny laboratory for designing OKLCh color palettes (Version v1.0.1) [Computer software]. Zenodo. [https://doi.org/10.5281/zenodo.22853591](https://doi.org/10.5281/zenodo.22853591)
 
 ---
 
